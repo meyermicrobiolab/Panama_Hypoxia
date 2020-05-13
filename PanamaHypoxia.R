@@ -320,6 +320,22 @@ pdf("Panama_Barcharts_Class.pdf",width=20, height=10)
 plot_grid(p1,p2,labels=c("A","B"), ncol=2, nrow=1)
 dev.off()
 
+                               
+################### try bubbleplots
+
+pdf(file="bubbleplot.pdf",width=8.5)
+ggplot(ps_ra,aes(Sample,Treatment))+
+  geom_point(aes(size=Abundance),alpha=0.5)+
+  scale_size(range = c(0, 100), name="Relative Abundance")+
+  scale_y_discrete(limits = rev(levels(ps_ra$Treatment)))+
+  theme_bw()+
+  theme(axis.text.x=element_text(size=10,angle=90,hjust=1,vjust=0))+
+  theme(axis.text.y=element_text(size=10))+
+  theme(axis.title.x=element_blank())+
+  theme(axis.title.y=element_blank())+
+  theme(legend.text = element_text(size=10))
+   #+scale_colour_manual(values=myPalette1)
+dev.off()
 
 
 ################################# ANCOM TEST OF DIFFERENTIALLY ABUNDANT FAMILIES
