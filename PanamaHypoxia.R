@@ -1,9 +1,3 @@
-install.packages(c("car", "cowplot", "data.table", "dplyr", "exactRankTests", "ggplot2", "igraph", "knitr", "propr", "randomcoloR", "reshape2", "Rmisc", "tibble", "vegan", "zCompositions"))
-BiocManager::install("dada2", version = "3.10")
-BiocManager::install("phyloseq")
-devtools::install_github("ggloor/ALDEx_bioc")
-devtools::install_github('ggloor/CoDaSeq/CoDaSeq')
-
 library(dada2)
 library(ShortRead)
 library(ggplot2)
@@ -26,7 +20,7 @@ library(exactRankTests)
 library(nlme)
 library(data.table)
 library(Rmisc)
-##what versions of everything was used
+## save version information 
 writeLines(capture.output(sessionInfo()), "sessionInfo.txt")
 
 ###### Quality-filter reads and create Amplicon Sequence Variant tables
