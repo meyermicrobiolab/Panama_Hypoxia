@@ -41,6 +41,7 @@ ps
 
 ##Subsetting species SSID
 ps=subset_samples(ps,Species =="Siderastrea siderea")
+ps=subset_samples(ps,Site!="Punta")
 ps
 otu = as(otu_table(ps), "matrix")
 taxon = as(tax_table(ps), "matrix")
