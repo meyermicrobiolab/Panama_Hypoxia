@@ -85,7 +85,7 @@ screeplot(d.pcx)
 df_out <- as.data.frame(d.pcx$x)
 theme_set(theme_bw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()))
 cols<-c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-pdf("PCA_SSID_site.pdf",width=8.5)
+pdf(file="PCA_SSID_site.pdf",width=8.5)
 p<-ggplot(df_out,aes(x=PC1,y=PC2,fill=samples$Site,shape=samples$Species))
 p<-p+geom_point(size=3)+
   theme(axis.title=element_text(size=14))+
