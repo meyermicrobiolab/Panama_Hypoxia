@@ -1,0 +1,297 @@
+---
+title: "Panama_Hypoxia"
+author: "JM"
+date: "5/13/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries
+
+```{r}
+library(dada2)
+library(ShortRead)
+library(ggplot2)
+library(phyloseq)
+library(vegan)
+library(knitr)
+library(ALDEx2)
+library(CoDaSeq)
+library(zCompositions)
+library(igraph)
+library(car)
+library(grDevices)
+library(propr)
+library(cowplot)
+library(randomcoloR)
+library(dplyr)
+library(reshape2)
+library(tibble)
+library(exactRankTests)
+library(nlme)
+library(data.table)
+library(Rmisc)
+writeLines(capture.output(sessionInfo()), "sessionInfo.txt")
+```
+
+## Quality-filter the sequencing reads and create Amplicon Sequence Variant (ASV) tables with DADA2
+
+Put unjoined R1 and R2 fastq files, with adaptors and primers previously removed with cutadapt into a directory for DADA2. Here, our forward and reverse fastq filenames have format: SAMPLENAME_R1_cut.fastq.gz and SAMPLENAME_R2_cut.fastq.gz
+
+Make sure the full path is updated in the next line:
+
+```{r}
+path <- "~/Desktop/PANAMA_HYPOXIA/cutadapt"
+list.files(path)
+fnFs <- sort(list.files(path, pattern="_R1_cut.fastq.gz", full.names = TRUE))
+fnRs <- sort(list.files(path, pattern="_R2_cut.fastq.gz", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
+plotQualityProfile(fnFs[1:6])
+plotQualityProfile(fnRs[1:6])
+
+# Perform filtering and trimming
+filt_path <- file.path(path, "filtered") 
+filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq.gz"))
+filtRs <- file.path(filt_path, paste0(sample.names, "_R_filt.fastq.gz"))
+out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(150,150),
+                     maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+                     compress=TRUE, multithread=TRUE) # On Windows set multithread=FALSE
+head(out)
+
+# Learn the Error Rates, it TAKES TIME!
+errF <- learnErrors(filtFs, multithread=TRUE)
+errR <- learnErrors(filtRs, multithread=TRUE)
+plotErrors(errF, nominalQ=TRUE)
+
+# Dereplicate the filtered fastq files
+derepFs <- derepFastq(filtFs, verbose=TRUE)
+derepRs <- derepFastq(filtRs, verbose=TRUE)
+names(derepFs) <- sample.names
+names(derepRs) <- sample.names
+
+# Infer the sequence variants in each sample
+dadaFs <- dada(derepFs, err=errF, multithread=TRUE)
+dadaRs <- dada(derepRs, err=errR, multithread=TRUE)
+
+# Inspecting the dada-class object returned by dada:
+dadaFs[[1]]
+
+# Merge the denoised forward and reverse reads:
+mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE)
+# Inspect the merger data.frame from the first sample
+head(mergers[[1]])
+
+# Construct sequence table
+seqtab <- makeSequenceTable(mergers) ## The sequences being tabled vary in length.
+dim(seqtab)
+
+# Inspect distribution of sequence lengths
+table(nchar(getSequences(seqtab)))
+
+#Remove chimeric sequences:
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+dim(seqtab.nochim)
+sum(seqtab.nochim)/sum(seqtab)
+
+# Track reads through the pipeline
+# As a final check of our progress, we’ll look at the number of reads that made it through each step in the pipeline
+getN <- function(x) sum(getUniques(x))
+track <- cbind(out, sapply(dadaFs, getN), sapply(mergers, getN), rowSums(seqtab), rowSums(seqtab.nochim))
+colnames(track) <- c("input", "filtered", "denoised", "merged", "tabled", "nonchim")
+rownames(track) <- sample.names
+head(track)
+write.table(track, "dada_read_stats.txt",sep="\t",col.names=NA)
+
+# SAVE THIS FILE SO YOU DON'T HAVE TO REPEAT ALL OF THE ABOVE STEPS, adjust path name
+saveRDS(seqtab.nochim, file="~/Desktop/PANAMA_HYPOXIA/seqtab.nochim.rds")
+# RELOAD THE SAVED INFO FROM HERE (if you have closed the project):
+# seqtab.nochim <- readRDS("~/Desktop/PANAMA_HYPOXIA/seqtab.nochim.rds")
+seqtab.nochim <- readRDS("~/Desktop/PANAMA_HYPOXIA/seqtab.nochim.rds")
+```
+
+## Assign taxonomy in DADA2
+
+Make sure the taxonomy reference database is in your working directory. Keep the database file gzipped. Adjust path name below. This step is very time consuming.
+
+When taxonomy assignment is complete, we will use base R and phyloseq to clean up the taxonomy table. First, we will replace NAs and empty cells with the lowest taxonomy classification available. Second, we will use phyloseq to remove reads that are classified as Eukaryotes or unclassified at the domain level (ie, we are keeping only Bacteria and Archaea because that is what our primers target).
+
+```{r}
+taxa <- assignTaxonomy(seqtab.nochim, "~/Desktop/PANAMA_HYPOXIA/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
+
+# FIX the NAs in the taxa table
+taxon <- as.data.frame(taxa,stringsAsFactors=FALSE)
+taxon$Phylum[is.na(taxon$Phylum)] <- taxon$Kingdom[is.na(taxon$Phylum)]
+taxon$Class[is.na(taxon$Class)] <- taxon$Phylum[is.na(taxon$Class)]
+taxon$Order[is.na(taxon$Order)] <- taxon$Class[is.na(taxon$Order)]
+taxon$Family[is.na(taxon$Family)] <- taxon$Order[is.na(taxon$Family)]
+taxon$Genus[is.na(taxon$Genus)] <- taxon$Family[is.na(taxon$Genus)]
+write.table(taxon,"silva_taxa_table.txt",sep="\t",col.names=NA)
+write.table(seqtab.nochim, "silva_otu_table.txt",sep="\t",col.names=NA)
+# Create phyloseq object from otu and taxonomy tables from dada2, along with the sample metadata.
+otu <- read.table("silva_otu_table.txt",sep="\t",header=TRUE, row.names=1)
+taxon <- read.table("silva_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
+samples<-read.table("metadata.txt",sep="\t",header=T,row.names=1)
+OTU = otu_table(otu, taxa_are_rows=FALSE)
+taxon<-as.matrix(taxon)
+TAX = tax_table(taxon)
+sampledata = sample_data(samples)
+ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE), 
+               sample_data(samples), 
+               tax_table(taxon))
+ps
+# remove chloroplasts and mitochondria and Eukaryota
+get_taxa_unique(ps, "Family")
+get_taxa_unique(ps, "Order")
+get_taxa_unique(ps, "Kingdom")
+ps <- subset_taxa(ps, Family !="Mitochondria")
+ps <- subset_taxa(ps, Order !="Chloroplast")
+ps <- subset_taxa(ps, Kingdom !="Eukaryota")
+ps <- subset_taxa(ps, Kingdom !="NA")
+get_taxa_unique(ps, "Family")
+get_taxa_unique(ps, "Order")
+get_taxa_unique(ps, "Kingdom")
+ps
+
+# Now export cleaned otu and taxa tables from phyloseq for future reference
+otu = as(otu_table(ps), "matrix")
+taxon = as(tax_table(ps), "matrix")
+metadata = as(sample_data(ps), "matrix")
+write.table(otu,"silva_nochloronomito_otu_table.txt",sep="\t",col.names=NA)
+write.table(taxon,"silva_nochloronomito_taxa_table.txt",sep="\t",col.names=NA)
+```
+
+## Explore community data in phyloseq
+
+At this point, remove the extraction blanks / no biomass controls from the analysis. ASVs detected in blanks are recorded in the spreadsheets saved at the end of the previous section and can be easily converted to supplementary tables to accompany manuscripts.
+
+We will also look at numbers of taxa and filter out very low abundance ASVs.
+
+```{r}
+# remove control samples
+ps = subset_samples(ps, Site != "control")
+ps
+
+# plot number of observed ASVs
+plot_richness(ps,x="Treatment",color="Species",measures=c("Observed"))
+
+# look at data and chose filtering method for very low abundance ASVs
+ntaxa(ps) 
+ps5<-filter_taxa(ps, function(x) mean(x) >5, TRUE)
+ntaxa(ps5)
+get_taxa_unique(ps, "Genus")
+get_taxa_unique(ps5, "Genus")
+
+# After filtering out ASVs with very low abundance with phyloseq, now export otu and taxa tables for codaseq
+otu = as(otu_table(ps5), "matrix")
+taxon = as(tax_table(ps5), "matrix")
+metadata = as(sample_data(ps5), "matrix")
+write.table(otu,"ps5_silva_nochloronomito_otu_table.txt",sep="\t",col.names=NA)
+write.table(taxon,"ps5_silva_nochloronomito_taxa_table.txt",sep="\t",col.names=NA)
+write.table(metadata,"ps5_silva_metadata.txt",sep="\t",col.names=NA)
+```
+
+## Perform center-log-ratio transformation on ASVs and calculate Aitchison Distance and principal components
+
+```{r}
+otu <- read.table("ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
+taxon <- read.table("ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
+samples<-read.table("ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
+genus<-as.character(taxon$Genus)
+
+# First, replace 0 values with an estimate (because normalization is taking log, can't have 0)
+# Also transposing here, need samples as rows
+d.czm <- cmultRepl(t(otu), method="CZM", label=0)
+# Perform the center-log-ratio (CLR) transformation 
+d.clr <- codaSeq.clr(d.czm)
+# transpose matrix of CLR transformed data for ordination and dendrogram
+E.clr <- t(d.clr)
+# plot compositional PCA biplot (perform a singular value decomposition)
+d.pcx <- prcomp(E.clr)
+# calculate percent variance explained for the axis labels
+pc1 <- round(d.pcx$sdev[1]^2/sum(d.pcx$sdev^2),2)
+pc2 <- round(d.pcx$sdev[2]^2/sum(d.pcx$sdev^2),2)
+xlab <- paste("PC1: ", pc1, sep="")
+ylab <- paste("PC2: ", pc2, sep="")
+biplot(d.pcx, cex=c(0.6,0.4), var.axes=F,scale=1, xlab=xlab, ylab=ylab, ylabs=genus)
+summary(d.pcx)
+str(d.pcx)
+screeplot(d.pcx)
+```
+
+```{r}
+# replot PCA with ggplot2 (showing samples only)
+df_out <- as.data.frame(d.pcx$x)
+theme_set(theme_bw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()))
+cols<-c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+#pdf("PCA.pdf",width=8.5)
+p<-ggplot(df_out,aes(x=PC1,y=PC2,fill=samples$Species,shape=samples$Treatment))
+p<-p+geom_point(size=3)+
+  theme(axis.title=element_text(size=14))+
+  theme(axis.text=element_text(size=12))+
+  theme(legend.title=element_text(size=14))+
+  theme(legend.text=element_text(size=12))+
+  scale_fill_manual(values=cols)+
+  scale_shape_manual(values=c(21,22,24))+
+  guides(fill = guide_legend(override.aes=list(shape=21)))
+p + labs(x=xlab, y=ylab, fill="Species",shape="Treatment") + coord_fixed()
+#dev.off()
+```
+
+## Try out bubbleplots
+
+
+```{r}
+otu <- read.table("ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
+taxon <- read.table("ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
+samples<-read.table("ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
+OTU = otu_table(otu, taxa_are_rows=FALSE)
+taxon<-as.matrix(taxon)
+TAX = tax_table(taxon)
+sampledata = sample_data(samples)
+ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE), 
+               sample_data(samples), 
+               tax_table(taxon))
+ps
+ps_ra<-transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
+
+# aggregate ASVs by Class
+dat <- tax_glom(ps_ra, taxrank = "Class")
+#melt the data, so it's like a dataframe
+datm <- psmelt(dat)
+
+#pdf(file="bubbleplot.pdf",width=8.5)
+ggplot(datm,aes(Sample,Class))+
+  geom_point(aes(size=Abundance),alpha=0.5)+
+  scale_size(range = c(0, 1), name="Relative Abundance")+
+  scale_y_discrete(limits = rev(levels(datm$Class)))+
+  theme_bw()+
+  theme(axis.text.x=element_text(size=10,angle=90,hjust=1,vjust=0))+
+  theme(axis.text.y=element_text(size=10))+
+  theme(axis.title.x=element_blank())+
+  theme(axis.title.y=element_blank())+
+  theme(legend.text = element_text(size=10))
+   #+scale_colour_manual(values=myPalette1)
+   #+facet_grid(.~Species)
+#dev.off()
+
+
+
+rick<-subset_taxa(ps_ra, Genus=="MD3-55")
+rick
+otu.rick = as(otu_table(rick), "matrix")
+taxon.rick = as(tax_table(rick), "matrix")
+meta.rick = as(sample_data(rick), "matrix")
+otu.rick<-as.data.frame(otu.rick)
+otu.rick<-rownames_to_column(otu.rick,var="Sample")
+#export ASV sequences for supplemental table
+write.table(otu.rick,"MD3-55_ASVs.txt",sep="\t",col.names=NA)
+
+
+
+```
+
