@@ -546,6 +546,20 @@ dev.off()
 
 ```{r}
 ########## BARCHARTS
+
+# READ IN OTU data that has been filtered for very low abundance sequences. 
+otu <- read.table("ps5_silva_nochloronomito_otu_table_myorder.txt",sep="\t",header=TRUE, row.names=1)
+taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
+samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
+
+##make a phyloseq object to be manipulated
+OTU = otu_table(otu, taxa_are_rows=FALSE)
+taxon<-as.matrix(taxon)
+TAX = tax_table(taxon)
+sampledata = sample_data(samples)
+ps5 <- phyloseq(otu_table(otu, taxa_are_rows=FALSE), 
+               sample_data(samples), 
+               tax_table(taxon))
 ps5
 ps_ra<-transform_sample_counts(ps5, function(OTU) OTU/sum(OTU))
 ps_ra_alam = subset_samples(ps_ra, Species == "Agaricia lamarcki")
@@ -563,27 +577,27 @@ palette38<-c("#AC99E4","#BA4AB4","#4BA68D","#A240ED","#79DE65","#E7A24F","#A3A47
 p1=plot_bar(ps_ra_alam, fill="Class")+
   geom_bar(aes(fill=Class), stat="identity",position="stack")+theme(strip.text=element_text(face="bold"))+
   theme(axis.text.x=element_text(angle = 90))+scale_fill_manual(values=palette38)+
-  facet_grid(.~Treatment,scales="free",space="free")+
+  facet_grid(.~Logger.MiniDOT,scales="free",space="free")+
   ggtitle("Agaricia lamarcki")+
   theme(plot.title = element_text(face="italic"))+
-  theme(legend.position = "bottom")+
+  theme(legend.position = "none")+
   theme(axis.title.x = element_blank())
 p1
 
 p2=plot_bar(ps_ra_ssid, fill="Class")+
   geom_bar(aes(fill=Class), stat="identity",position="stack")+theme(strip.text=element_text(face="bold"))+
   theme(axis.text.x=element_text(angle = 90))+scale_fill_manual(values=palette38)+
-  facet_grid(.~Treatment,scales="free",space="free")+
+  facet_grid(.~Logger.MiniDOT,scales="free",space="free")+
   ggtitle("Siderastrea siderea")+
   theme(plot.title = element_text(face="italic"))+
-  theme(legend.position="bottom")+
+  theme(legend.position="none")+
   theme(axis.title.x = element_blank())
 p2
 
 # adjust width and height until it looks right for double columns
-#pdf("Panama_Barcharts_Class.pdf",width=20, height=10)
-plot_grid(p1,p2,labels=c("A","B"), ncol=2, nrow=1)
-#dev.off()
+pdf("Panama_Barcharts_Class_Logger.pdf",width=20, height=10)
+plot_grid(p1,p2,labels=c("A","B"), ncol=1, nrow=2)
+dev.off()
 ```
 
 
