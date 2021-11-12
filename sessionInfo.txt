@@ -1,0 +1,46 @@
+R version 4.0.4 (2021-02-15)
+Platform: x86_64-apple-darwin17.0 (64-bit)
+Running under: macOS Big Sur 10.16
+
+Matrix products: default
+LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] stats4    parallel  stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] Rmisc_1.5                   plyr_1.8.6                  data.table_1.13.6           nlme_3.1-152               
+ [5] exactRankTests_0.8-31       tibble_3.0.6                reshape2_1.4.4              dplyr_1.0.4                
+ [9] randomcoloR_1.1.0.1         cowplot_1.1.1               propr_4.2.6                 igraph_1.2.6               
+[13] CoDaSeq_0.99.6              car_3.0-10                  carData_3.0-4               ALDEx2_1.23.2              
+[17] Rfast_2.0.1                 RcppZiggurat_0.1.6          zCompositions_1.3.4         truncnorm_1.0-8            
+[21] NADA_1.6-1.1                survival_3.2-7              MASS_7.3-53.1               knitr_1.31                 
+[25] vegan_2.5-7                 lattice_0.20-41             permute_0.9-5               phyloseq_1.34.0            
+[29] ggplot2_3.3.3               ShortRead_1.48.0            GenomicAlignments_1.26.0    SummarizedExperiment_1.20.0
+[33] Biobase_2.50.0              MatrixGenerics_1.2.1        matrixStats_0.58.0          Rsamtools_2.6.0            
+[37] GenomicRanges_1.42.0        GenomeInfoDb_1.26.2         Biostrings_2.58.0           XVector_0.30.0             
+[41] IRanges_2.24.1              S4Vectors_0.28.1            BiocParallel_1.24.1         BiocGenerics_0.36.0        
+[45] dada2_1.18.0                Rcpp_1.0.6                  rmarkdown_2.7              
+
+loaded via a namespace (and not attached):
+ [1] Rtsne_0.15             colorspace_2.0-0       hwriter_1.3.2          rio_0.5.16             ellipsis_0.3.1        
+ [6] rprojroot_2.0.2        fs_1.5.0               rstudioapi_0.13        remotes_2.4.0          fansi_0.4.2           
+[11] codetools_0.2-18       splines_4.0.4          cachem_1.0.4           pkgload_1.2.2          ade4_1.7-16           
+[16] jsonlite_1.7.2         cluster_2.1.1          png_0.1-7              compiler_4.0.4         Matrix_1.3-2          
+[21] fastmap_1.1.0          cli_3.0.1              htmltools_0.5.1.1      prettyunits_1.1.1      tools_4.0.4           
+[26] gtable_0.3.0           glue_1.4.2             GenomeInfoDbData_1.2.4 V8_3.4.0               tinytex_0.29          
+[31] cellranger_1.1.0       vctrs_0.3.6            rhdf5filters_1.2.0     multtest_2.46.0        ape_5.4-1             
+[36] iterators_1.0.13       xfun_0.21              stringr_1.4.0          ps_1.5.0               openxlsx_4.2.3        
+[41] testthat_3.0.2         lifecycle_1.0.0        devtools_2.4.2         zlibbioc_1.36.0        scales_1.1.1          
+[46] hms_1.0.0              biomformat_1.18.0      rhdf5_2.34.0           RColorBrewer_1.1-2     curl_4.3              
+[51] yaml_2.2.1             memoise_2.0.0          latticeExtra_0.6-29    stringi_1.5.3          desc_1.3.0            
+[56] foreach_1.5.1          zip_2.1.1              pkgbuild_1.2.0         rlang_0.4.10           pkgconfig_2.0.3       
+[61] bitops_1.0-6           evaluate_0.14          purrr_0.3.4            Rhdf5lib_1.12.1        processx_3.5.2        
+[66] tidyselect_1.1.0       magrittr_2.0.1         R6_2.5.0               generics_0.1.0         DelayedArray_0.16.1   
+[71] haven_2.3.1            foreign_0.8-81         pillar_1.5.0           withr_2.4.1            mgcv_1.8-34           
+[76] abind_1.4-5            RCurl_1.98-1.2         crayon_1.4.1           utf8_1.1.4             jpeg_0.1-8.1          
+[81] progress_1.2.2         usethis_2.0.1          readxl_1.3.1           grid_4.0.4             callr_3.7.0           
+[86] forcats_0.5.1          digest_0.6.27          RcppParallel_5.0.2     munsell_0.5.0          sessioninfo_1.1.1     

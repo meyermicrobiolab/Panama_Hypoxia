@@ -1,0 +1,58 @@
+Sample	Site	Logger MiniDOT	Treatment	Origin	Species
+AA-1	Tierra Oscura	7	Resident	resident	Siderastrea siderea
+AA-10	Punta Caracol	8	Control plots	transplant	Agaricia lamarcki
+AA-11	Punta Caracol	8	Control plots	transplant	Agaricia lamarcki
+AA-12	Punta Caracol	8	Control plots	transplant	Agaricia lamarcki
+AA-13	Punta Caracol	8	Control plots	transplant	Siderastrea siderea
+AA-15	Punta Caracol	8	Control plots	transplant	Siderastrea siderea
+AA-16	Punta Caracol	8	Control plots	resident	Siderastrea siderea
+AA-17	Punta Caracol	4	Hypoxia plots	transplant	Agaricia lamarcki
+AA-18	Punta Caracol	4	Hypoxia plots	transplant	Agaricia lamarcki
+AA-19	Punta Caracol	4	Hypoxia plots	transplant	Agaricia lamarcki
+AA-2	Tierra Oscura	7	Resident	resident	Siderastrea siderea
+AA-20	Punta Caracol	4	Hypoxia plots	transplant	Siderastrea siderea
+AA-21	Punta Caracol	4	Hypoxia plots	transplant	Siderastrea siderea
+AA-22	Punta Caracol	4	Hypoxia plots	transplant	Siderastrea siderea
+AA-23	Punta Caracol	4	Hypoxia plots	resident	Siderastrea siderea
+AA-24	Punta Caracol	2	Control plots	transplant	Agaricia lamarcki
+AA-25	Punta Caracol	2	Control plots	transplant	Agaricia lamarcki
+AA-26	Punta Caracol	2	Control plots	transplant	Agaricia lamarcki
+AA-27	Punta Caracol	2	Control plots	transplant	Siderastrea siderea
+AA-28	Punta Caracol	2	Control plots	transplant	Siderastrea siderea
+AA-29	Punta Caracol	2	Control plots	transplant	Siderastrea siderea
+AA-3	Tierra Oscura	7	Resident	resident	Siderastrea siderea
+AA-30	Punta Caracol	2	Control plots	resident	Siderastrea siderea
+AA-31	Punta Caracol	1	Hypoxia plots	transplant	Agaricia lamarcki
+AA-32	Punta Caracol	1	Hypoxia plots	transplant	Agaricia lamarcki
+AA-33	Punta Caracol	1	Hypoxia plots	transplant	Agaricia lamarcki
+AA-34	Punta Caracol	1	Hypoxia plots	transplant	Siderastrea siderea
+AA-35	Punta Caracol	1	Hypoxia plots	transplant	Siderastrea siderea
+AA-36	Punta Caracol	1	Hypoxia plots	transplant	Siderastrea siderea
+AA-37	Punta Caracol	1	Hypoxia plots	resident	Siderastrea siderea
+AA-38	Punta Caracol	5	Control plots	transplant	Agaricia lamarcki
+AA-39	Punta Caracol	5	Control plots	transplant	Agaricia lamarcki
+AA-4	Finca	6	Resident	resident	Siderastrea siderea
+AA-40	Punta Caracol	5	Control plots	transplant	Agaricia lamarcki
+AA-41	Punta Caracol	5	Control plots	transplant	Siderastrea siderea
+AA-42	Punta Caracol	5	Control plots	transplant	Siderastrea siderea
+AA-43	Punta Caracol	5	Control plots	transplant	Siderastrea siderea
+AA-45	Punta Caracol	9	Hypoxia plots	transplant	Agaricia lamarcki
+AA-46	Punta Caracol	9	Hypoxia plots	transplant	Agaricia lamarcki
+AA-47	Punta Caracol	9	Hypoxia plots	transplant	Agaricia lamarcki
+AA-48	Punta Caracol	9	Hypoxia plots	transplant	Siderastrea siderea
+AA-49	Punta Caracol	9	Hypoxia plots	transplant	Siderastrea siderea
+AA-5	Finca	6	Resident	resident	Agaricia lamarcki
+AA-50	Punta Caracol	9	Hypoxia plots	transplant	Siderastrea siderea
+AA-51	Punta Caracol	9	Hypoxia plots	resident	Agaricia lamarcki
+AA-52	Punta Caracol	3	Hypoxia plots	transplant	Agaricia lamarcki
+AA-53	Punta Caracol	3	Hypoxia plots	transplant	Agaricia lamarcki
+AA-54	Punta Caracol	3	Hypoxia plots	transplant	Agaricia lamarcki
+AA-55	Punta Caracol	3	Hypoxia plots	transplant	Siderastrea siderea
+AA-56	Punta Caracol	3	Hypoxia plots	transplant	Siderastrea siderea
+AA-57	Punta Caracol	3	Hypoxia plots	transplant	Siderastrea siderea
+AA-58	Punta Caracol	3	Hypoxia plots	resident	Siderastrea siderea
+AA-6	Finca	6	Resident	resident	Siderastrea siderea
+AA-7	Finca	6	Resident	resident	Agaricia lamarcki
+AA-8	Finca	6	Resident	resident	Agaricia lamarcki
+AA-9	Finca	6	Resident	resident	Siderastrea siderea
+BLANK	control	control	control	control	control
