@@ -975,6 +975,7 @@ ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE),
                tax_table(taxon))
 ps
 #22817 taxa and 57 samples
+
 # remove control samples for plotting, remaining samples = 56
 ps = subset_samples(ps, Species != "control")
 ps
@@ -1000,7 +1001,7 @@ dat <- tax_glom(ps_ssid, taxrank = "Family")
 #melt the data, so it's like a dataframe
 datm <- psmelt(dat)
 #Cast the new datatable with columns that are of interest
-datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Logger.MiniDOT + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
+datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
 dim(datc) #dimensions of the table
 #683 families
 otud <- datc[,c(1,7:683)] #select the first column, and then all of the taxa columns  
@@ -1042,8 +1043,8 @@ sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, Sh
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Logger.MiniDOT","Family"), na.rm=TRUE)
 
-cols<-c("1"="#C9A456","2"="#E27741","3"="#ABC9CB","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029")
-sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8"))
+cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029", "9"="#ABC9CB")
+sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
 #pdf("ANCOM_Families_Logger.MiniDOT_covarSpecies.pdf",width=8.5)
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Logger.MiniDOT))+
@@ -1113,8 +1114,8 @@ sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variabl
 library(Rmisc)
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Logger.MiniDOT","Family"), na.rm=TRUE)
 
-cols<-c("1"="#C9A456","2"="#E27741","3"="#ABC9CB","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029")
-sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8"))
+cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029", "9"="#ABC9CB")
+sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
 #pdf("ANCOM_Families_Logger.MiniDOT_covarSpecies.pdf",width=8.5)
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Logger.MiniDOT))+
@@ -1206,8 +1207,8 @@ sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("
 #position=position_jitter(height=.00001)
 
 pdf("ANCOM_Families_Logger_covarSpecies.pdf",width=14,height=16)
-cols<-c("1"="#C9A456","2"="#E27741","3"="#ABC9CB","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029")
-sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8"))
+cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029","9"="#ABC9CB")
+sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Logger.MiniDOT))+
   scale_colour_manual(values=cols)+
@@ -1253,7 +1254,7 @@ summary(inv2)
 pc<-read.table("Panama_ps_ra_silva_nochloronomito_otu_table_INDIC.txt",sep="\t",header=TRUE)
 
 ##Next, we subset the data as desired by calling the specific columns we want to include in our boxplot figure. I’ve chosen the top four most significant ASVs associated with the “Hypoxia plots” grouping (stat-value>.55)
-sub_pc<-data.frame(Treatment = pc$Treatment, ASV_17 = pc$ASV_17, ASV_256 = pc$ASV_256, ASV_314 = pc$ASV_314, ASV_425 = pc$ASV_425)
+sub_pc<-data.frame(Treatment = pc$Treatment, Alteromonas = pc$ASV_17, Neptuniibacter = pc$ASV_256, Aestuariicella = pc$ASV_314, Marinobacter = pc$ASV_425)
 
 ##Next, we convert the data frame from a “wide” format to a “long” format 
 sub_pc_m = melt(sub_pc, id = "Treatment")
@@ -1261,7 +1262,7 @@ sub_pc_m = melt(sub_pc, id = "Treatment")
 ##Now we can plot the data using geom_boxplot from ggplot2
 sub_pc_m$Treatment<-factor(sub_pc_m$Treatment, levels=c("Resident","Control plots","Hypoxia plots"))
 cols<-c("Resident"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
-#pdf("INDIC_ASVs_Treatment_boxplot.pdf",width=10)
+pdf("INDIC_ASVs_Treatment_boxplot.pdf",width=10)
 gg<-ggplot(sub_pc_m, aes(x = variable, y = value)) + 
     geom_boxplot(outlier.shape=NA)+
     geom_point(aes(color=Treatment))+
@@ -1277,5 +1278,5 @@ gg<-ggplot(sub_pc_m, aes(x = variable, y = value)) +
      labs(x= "", y = "Proportion") + 
      scale_color_manual(values = cols)
 gg
-#dev.off()
+dev.off()
 ```
