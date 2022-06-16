@@ -270,9 +270,10 @@ p<-p+geom_point(size=3)+
   guides(fill = guide_legend(override.aes=list(shape=21)))
 p + labs(x=xlab, y=ylab, fill="Species", shape="Treatment") + coord_fixed()
 #dev.off()
+```
 
-
-####### Use phyloseq/vegan to perform ANOSIM/PERMANOVA
+```{r}
+##### Use phyloseq/vegan to perform ANOSIM/PERMANOVA
 # set metadata as factors for anosim
 treat<-as.character(samples$Treatment)
 species<-as.character(samples$Species)
@@ -306,10 +307,15 @@ pdf("Panama_ANOSIM_logger.pdf",width=8.5)
 plot(ano.logger)
 dev.off()
 
+#Treatment
+ano.treat <- anosim(dist.clr, treat, permutations=999)
+pdf("Panama_ANOSIM_treat.pdf",width=8.5)
+plot(ano.treat)
+dev.off()
+
 #permanova, treatment and species
 perm<-adonis(dist.clr~treat*species,as(sample_data(ps),"data.frame"))
 print(perm)
-
 ```
 
 
@@ -519,12 +525,10 @@ dev.off()
 
 ```
 
-
 ```{r}
 ################################# ANCOM TEST OF DIFFERENTIALLY ABUNDANT FAMILIES
 #ANCOM Function - compare across multiple treatments groups using a compositional appproach
 #https://sites.google.com/site/siddharthamandal1985/research
-
 ###Need to run this first in order to run ANCOM on data
 ancom.W = function(otu_data,var_data,
                    adjusted,repeated,
@@ -659,7 +663,6 @@ ancom.W = function(otu_data,var_data,
   
   return(W)
 }
-
 ANCOM.main = function(OTUdat,Vardat,
                       adjusted,repeated,
                       main.var,adj.formula,
@@ -667,36 +670,27 @@ ANCOM.main = function(OTUdat,Vardat,
                       random.formula,
                       multcorr,sig,
                       prev.cut){
-
   p.zeroes=apply(OTUdat[,-1],2,function(x){
     s=length(which(x==0))/length(x)
   })
-
   OTUdat.thinned=OTUdat[,c(1,1+which(p.zeroes<prev.cut))]
-
   otu.names=colnames(OTUdat.thinned)[-1]
-
   W.detected   <- ancom.W(OTUdat.thinned,Vardat,
                           adjusted,repeated,
                           main.var,adj.formula,
                           repeat.var,longitudinal,random.formula,
                           multcorr,sig)
-
   W_stat       <- W.detected
-
   W_frame = data.frame(otu.names,W_stat,row.names=NULL)
   W_frame = W_frame[order(-W_frame$W_stat),]
-
   W_frame$detected_0.9=rep(FALSE,dim(W_frame)[1])
   W_frame$detected_0.8=rep(FALSE,dim(W_frame)[1])
   W_frame$detected_0.7=rep(FALSE,dim(W_frame)[1])
   W_frame$detected_0.6=rep(FALSE,dim(W_frame)[1])
-
   W_frame$detected_0.9[which(W_frame$W_stat>0.9*(dim(OTUdat.thinned[,-1])[2]-1))]=TRUE
   W_frame$detected_0.8[which(W_frame$W_stat>0.8*(dim(OTUdat.thinned[,-1])[2]-1))]=TRUE
   W_frame$detected_0.7[which(W_frame$W_stat>0.7*(dim(OTUdat.thinned[,-1])[2]-1))]=TRUE
   W_frame$detected_0.6[which(W_frame$W_stat>0.6*(dim(OTUdat.thinned[,-1])[2]-1))]=TRUE
-
   final_results=list(W_frame)
   names(final_results)=c("W.taxa")
   return(final_results)
@@ -721,11 +715,9 @@ ps
 # remove control samples for plotting, remaining samples = 56
 ps = subset_samples(ps, Species != "control")
 ps
-
 #Separate coral species
 ps_ssid <- subset_samples(ps, Species == "Siderastrea siderea")
 ps_alam <- subset_samples(ps, Species == "Agaricia lamarcki")
-
 ############Siderastrea siderea
 # aggregate ASVs by family
 dat <- tax_glom(ps_ssid, taxrank = "Family")
@@ -761,19 +753,16 @@ comparison_test_treat=ANCOM.main(OTUdat=otu_test, #calling the OTU table
 res <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
 write.table(res,"SSID_ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.names=NA)
 res2 <- res[which(res$detected_0.7==TRUE),] #0.7 is the proportion of samples its detected in
-
 sig_sites <- glue::glue_collapse(droplevels(factor(res2$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
 #Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae, Marinobacteraceae, Francisellaceae, Halomonadaceae, Shewanellaceae
 #Calculate relative abundance
 datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
-
 #only selet the significant families
 sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae, Marinobacteraceae, Francisellaceae, Halomonadaceae, Shewanellaceae )
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family"), na.rm=TRUE)
-
 cols<-c("Resident"="#E69F00","Control plots"="#56B4E9","Hypoxia plots"="#CC79A7")
 sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Resident","Control plots","Hypoxia plots"))
 #pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=8.5)
@@ -833,19 +822,16 @@ comparison_test_treat=ANCOM.main(OTUdat=otu_test, #calling the OTU table
 resA <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
 write.table(res,"ALAM_ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.names=NA)
 resA2 <- res[which(resA$detected_0.7==TRUE),] 
-
 sig_sites <- glue::glue_collapse(droplevels(factor(resA2$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
 #Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae
 datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
-
 #only selet the significant families
 sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae )
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 library(Rmisc)
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family"), na.rm=TRUE)
-
 cols<-c("Resident"="#E69F00","Control plots"="#56B4E9","Hypoxia plots"="#CC79A7")
 sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Resident","Control plots","Hypoxia plots"))
 #pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=8.5)
@@ -905,7 +891,6 @@ comparison_test_treat=ANCOM.main(OTUdat=otu_test, #calling the OTU table
 resALL <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
 write.table(res,"ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.names=NA)
 resALL2 <- res[which(resALL$detected_0.7==TRUE),] 
-
 #### ANCOM test - Adjusted by Coral species, ANOVA
 comparison_test_treat=ANCOM.main(OTUdat=otu_test, #calling the OTU table
                                  Vardat=map_test, #calling the metadata
@@ -921,21 +906,17 @@ comparison_test_treat=ANCOM.main(OTUdat=otu_test, #calling the OTU table
 resALL3 <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
 write.table(resALL3,"SSID_ANCOM_family_ANOVA_Treatment_covarSpecies.txt",sep="\t",col.names=NA)
 resALL4 <- res[which(resALL3$detected_0.9==TRUE),] 
-
 sig_sites <- glue::glue_collapse(droplevels(factor(resALL4$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
 #Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae, Marinobacteraceae, Francisellaceae, Halomonadaceae, Shewanellaceae, Midichloriaceae, Schekmanbacteria, Desulfovibrionaceae, Bacteroidales, Anaerolineaceae
 #Calculate relative abundance
 datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
-
 #only selet the significant families
 sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae, Marinobacteraceae, Francisellaceae, Halomonadaceae, Shewanellaceae, Midichloriaceae, Schekmanbacteria, Desulfovibrionaceae, Bacteroidales, Anaerolineaceae )
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Species","Treatment","Family"), na.rm=TRUE)
-
 #position=position_jitter(height=.00001)
-
 #pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=11)
 cols<-c("Resident"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
 sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Resident","Control plots","Hypoxia plots"))
@@ -957,7 +938,6 @@ fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   theme(legend.text = element_text(size=12))
 fams
 #dev.off()
-
 ```
 
 
@@ -975,16 +955,13 @@ ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE),
                tax_table(taxon))
 ps
 #22817 taxa and 57 samples
-
 # remove control samples for plotting, remaining samples = 56
 ps = subset_samples(ps, Species != "control")
 ps
 #22817 taxa and 56 samples
-
 #Separate coral species
 ps_ssid <- subset_samples(ps, Species == "Siderastrea siderea")
 ps_alam <- subset_samples(ps, Species == "Agaricia lamarcki")
-
 ##color palette
 install.packages("devtools")
 devtools::install_github("shu251/PaletteWoodsHole")
@@ -993,8 +970,6 @@ names(woodshole)
 show_color(long_pond)
 long_pond = c("#C9A456", "#E27741", "#CB4E07","#8A9B5E",
               "#643830", "#ABC9CB", "#DAB576", "#B04029")
-
-
 ############Siderastrea siderea
 # aggregate ASVs by family
 dat <- tax_glom(ps_ssid, taxrank = "Family")
@@ -1030,19 +1005,16 @@ comparison_test_log=ANCOM.main(OTUdat=otu_test, #calling the OTU table
 res <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
 write.table(res,"SSID_ANCOM_family_KruskallWallis_Logger.MiniDOT.txt",sep="\t",col.names=NA)
 res2 <- res[which(res$detected_0.7==TRUE),] 
-
 sig_sites <- glue::glue_collapse(droplevels(factor(res2$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
 ##Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae
 #Calculate relative abundance
 datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
-
 #only selet the significant families
 sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae )
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Logger.MiniDOT","Family"), na.rm=TRUE)
-
 cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029", "9"="#ABC9CB")
 sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
 #pdf("ANCOM_Families_Logger.MiniDOT_covarSpecies.pdf",width=8.5)
@@ -1101,19 +1073,16 @@ comparison_test_log=ANCOM.main(OTUdat=otu_test, #calling the OTU table
 resA <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
 write.table(res,"ALAM_ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.names=NA)
 resA2 <- res[which(resA$detected_0.7==TRUE),] 
-
 sig_sites <- glue::glue_collapse(droplevels(factor(resA2$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
 #Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae
 datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
-
 #only selet the significant families
 sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 library(Rmisc)
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Logger.MiniDOT","Family"), na.rm=TRUE)
-
 cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029", "9"="#ABC9CB")
 sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
 #pdf("ANCOM_Families_Logger.MiniDOT_covarSpecies.pdf",width=8.5)
@@ -1173,7 +1142,6 @@ comparison_test_log=ANCOM.main(OTUdat=otu_test, #calling the OTU table
 resALL <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
 write.table(res,"ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.names=NA)
 resALL2 <- res[which(resALL$detected_0.7==TRUE),] 
-
 #### ANCOM test - Adjusted by Coral species, ANOVA
 comparison_test_treat=ANCOM.main(OTUdat=otu_test, #calling the OTU table
                                  Vardat=map_test, #calling the metadata
@@ -1190,22 +1158,17 @@ resALL3 <- comparison_test_treat$W.taxa #taxa that significantly vary across fac
 write.table(resALL3,"SSID_ANCOM_family_ANOVA_Logger_covarSpecies.txt",sep="\t",col.names=NA)
 resALL4 <- res[which(resALL3$detected_0.9==TRUE),] 
 write.table(resALL4,"resALL4.txt",sep="\t",col.names=NA)
-
 sig_sites <- glue::glue_collapse(droplevels(factor(resALL4$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
 #Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae, Idiomarinaceae, Marine_Group_II, Prolixibacteraceae, Archaea, B2M28, Arcobacteraceae, Desulfarculaceae, Schekmanbacteria, OCS116_clade, Cellvibrionales, Terasakiellaceae, Flammeovirgaceae, Desulfobulbaceae, Caenarcaniphilales, HOC36, Clade_III, Micrococcaceae, Rickettsiaceae, Anaerolineaceae, Moraxellaceae
-
 #Calculate relative abundance
 datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
-
 #only selet the significant families
 sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae, Idiomarinaceae, Marine_Group_II, Prolixibacteraceae, Archaea, B2M28, Arcobacteraceae, Desulfarculaceae, Schekmanbacteria, OCS116_clade, Cellvibrionales, Terasakiellaceae, Flammeovirgaceae, Desulfobulbaceae, Caenarcaniphilales, HOC36, Clade_III, Micrococcaceae, Rickettsiaceae, Anaerolineaceae, Moraxellaceae )
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Species","Logger.MiniDOT","Family"), na.rm=TRUE)
-
 #position=position_jitter(height=.00001)
-
 pdf("ANCOM_Families_Logger_covarSpecies.pdf",width=14,height=16)
 cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029","9"="#ABC9CB")
 sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
@@ -1229,6 +1192,97 @@ fams
 dev.off()
 ```
 
+```{r}
+############ Pulling out important families
+# aggregate ASVs by family
+dat <- tax_glom(ps, taxrank = "Family")
+#melt the data, so it's like a dataframe
+datm <- psmelt(dat)
+#Cast the new datatable with columns that are of interest
+datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Treatment + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
+dim(datc) #dimensions of the table
+#683 families
+otud <- datc[,c(1,7:683)] #select the first column, and then all of the taxa columns  
+colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
+metadat <- sample_data(ps) #get the sample data
+metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
+# at this point, my sample id numbers are the row names, not a separate column, move row names to column with dplylr
+metadat <- tibble::rownames_to_column(metadat, "Sample.ID") #make sure the sample names column is called Sample.ID
+names(otud) <- make.names(names(otud)) #get the names from the table for 
+otu_test <- otud #rename otud to otu_test, for syntax in ANCOM
+metadat <- select(metadat, c("Sample.ID","Species","Logger.MiniDOT")) # use select to only use treatment columns of interest
+map_test <- metadat #rename map_TEst
+Vardat <- map_test #specify that this for Vardat - ANCOM syntax
+#### ANCOM test - not adjusted, more than 2 levels = Kruskal Wallis
+comparison_test_log=ANCOM.main(OTUdat=otu_test, #calling the OTU table
+                                 Vardat=map_test, #calling the metadata
+                                 adjusted=FALSE, #true if covariates are to be included for adjustment
+                                 repeated=FALSE, #repeated measure
+                                 main.var="Logger.MiniDOT", #main variable or fator
+                                 adj.formula= NULL, #other factors to include
+                                 repeat.var=FALSE, #repeated measure
+                                 long = FALSE, #longitudinal study
+                                 multcorr=2,
+                                 sig=0.05, #significance level
+                                 prev.cut=0.90) #OTUs with proportion of zeroes greater than prev.cut are not included in the analysis
+resALL <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
+write.table(res,"ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.names=NA)
+resALL2 <- res[which(resALL$detected_0.7==TRUE),] 
+
+#### ANCOM test - Adjusted by Coral species, ANOVA
+comparison_test_treat=ANCOM.main(OTUdat=otu_test, #calling the OTU table
+                                 Vardat=map_test, #calling the metadata
+                                 adjusted=TRUE, #true if covariates are to be included for adjustment
+                                 repeated=FALSE, #repeated measure
+                                 main.var="Logger.MiniDOT", #main variable or fator
+                                 adj.formula= "Species", #other factors to include
+                                 repeat.var=FALSE, #repeated measure
+                                 long = FALSE, #longitudinal study
+                                 multcorr=2,
+                                 sig=0.05, #significance level
+                                 prev.cut=0.90) #OTUs with proportion of zeroes greater than prev.cut are not included in the analysis
+resALL3 <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
+write.table(resALL3,"SSID_ANCOM_family_ANOVA_Logger_covarSpecies.txt",sep="\t",col.names=NA)
+resALL4 <- res[which(resALL3$detected_0.9==TRUE),] 
+write.table(resALL4,"resALL4.txt",sep="\t",col.names=NA)
+
+sig_sites <- glue::glue_collapse(droplevels(factor(resALL4$otu.names)), sep = ", ") #this is to get a list of the families that are different
+print(sig_sites)
+#Family_XII, Desulfovibrionaceae, Arcobacteraceae, Midichloriaceae
+
+#Calculate relative abundance
+datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
+datc_relnames <- cbind(datc[,1:6],datc_relabund)
+
+#only selet the significant families
+sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT,Family_XII, Desulfovibrionaceae, Arcobacteraceae, Midichloriaceae)
+sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
+sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Species","Logger.MiniDOT","Family"), na.rm=TRUE)
+
+#position=position_jitter(height=.00001)
+
+pdf("ANCOM_Families_Logger3Fanilies_covarSpecies.pdf",width=11)
+cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029","9"="#ABC9CB")
+sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
+fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
+  geom_point(size=4,aes(color=Logger.MiniDOT))+
+  scale_colour_manual(values=cols)+
+  facet_grid(.~Species)+
+  coord_flip()+
+  theme_bw()+
+  theme(plot.margin=unit(c(1,1,1,1),"cm"))+
+  theme(axis.text.x=element_text(size=10))+
+  theme(axis.text.y=element_text(size=14))+
+  theme(axis.title.x=element_text(size=14))+
+  theme(axis.title.y=element_blank())+
+  theme(strip.text.x = element_text(size=14, face="italic"))+
+  theme(legend.justification=c(1,1), legend.position=c(1,1))+
+  geom_errorbar(aes(ymin=Proportion-se, ymax=Proportion+se), width=.1)+
+  theme(legend.title = element_blank())+
+  theme(legend.text = element_text(size=12))
+fams
+dev.off()
+```
 
 ## Indicator species analysis
 
