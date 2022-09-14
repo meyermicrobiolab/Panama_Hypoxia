@@ -24,10 +24,8 @@ library(exactRankTests)
 library(nlme)
 library(data.table)
 library(Rmisc)
-
 ##set wd
 setwd("~/Desktop/PANAMA_HYPOXIA")
-
 ## Save version information
 writeLines(capture.output(sessionInfo()), "sessionInfo.txt")
 ```
@@ -37,7 +35,6 @@ writeLines(capture.output(sessionInfo()), "sessionInfo.txt")
 ###### Quality-filter reads and create Amplicon Sequence Variant tables
 # put parsed, adaptors & primers removed, unjoined (R1 and R2 separate) fastq files
 # into directory for DADA2 & make sure the full path is updated in the next line:
-
 ###adjust path name
 path <- "~/Desktop/PANAMA_HYPOXIA/cutadapt"
 list.files(path)
@@ -86,7 +83,6 @@ head(out)
 errF <- learnErrors(filtFs, multithread=TRUE)
 # Reverse reads
 errR <- learnErrors(filtRs, multithread=TRUE)
-
 # visualize the estimated error rates
 plotErrors(errF, nominalQ=TRUE)
 ```
@@ -99,26 +95,20 @@ derepRs <- derepFastq(filtRs, verbose=TRUE)
 # Name the derep-class objects by the sample names
 names(derepFs) <- sample.names
 names(derepRs) <- sample.names
-
 # Infer the sequence variants in each sample
 dadaFs <- dada(derepFs, err=errF, multithread=TRUE)
 dadaRs <- dada(derepRs, err=errR, multithread=TRUE)
-
 # Inspecting the dada-class object returned by dada:
 dadaFs[[1]]
-
 # Merge the denoised forward and reverse reads:
 mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE)
 # Inspect the merger data.frame from the first sample
 head(mergers[[1]])
-
 # Construct sequence table
 seqtab <- makeSequenceTable(mergers) ## The sequences being tabled vary in length.
 dim(seqtab)
-
 # Inspect distribution of sequence lengths
 table(nchar(getSequences(seqtab)))
-
 #Remove chimeric sequences:
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
 dim(seqtab.nochim)
@@ -136,7 +126,6 @@ colnames(track) <- c("input", "filtered", "denoised", "merged", "tabled", "nonch
 rownames(track) <- sample.names
 head(track)
 write.table(track, "dada_read_stats.txt",sep="\t",col.names=NA)
-
 # SAVE THIS FILE SO YOU DON'T HAVE TO REPEAT ALL OF THE ABOVE STEPS, adjust name
 saveRDS(seqtab.nochim, file="~/Desktop/PANAMA_HYPOXIA/seqtab.nochim.rds")
 # RELOAD THE SAVED INFO FROM HERE (if you have closed the project):
@@ -149,7 +138,6 @@ seqtab.nochim <- readRDS("~/Desktop/PANAMA_HYPOXIA/seqtab.nochim.rds")
 # Assign taxonomy
 # Make sure the appropriate database is available in the DADA2 directory
 taxa <- assignTaxonomy(seqtab.nochim, "~/Desktop/PANAMA_HYPOXIA/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
-
 # FIX the NAs in the taxa table
 taxon <- as.data.frame(taxa,stringsAsFactors=FALSE)
 taxon$Phylum[is.na(taxon$Phylum)] <- taxon$Kingdom[is.na(taxon$Phylum)]
@@ -193,14 +181,12 @@ get_taxa_unique(ps, "Order") #413
 get_taxa_unique(ps, "Kingdom") #2
 ps
 #22817 taxa and 57 samples
-
 # filtered taxa with phyloseq, now export cleaned otu and taxa tables from phyloseq
 otu = as(otu_table(ps), "matrix")
 taxon = as(tax_table(ps), "matrix")
 metadata = as(sample_data(ps), "matrix")
 write.table(otu,"Panama_silva_nochloronomito_otu_table.txt",sep="\t",col.names=NA)
 write.table(taxon,"Panama_silva_nochloronomito_taxa_table.txt",sep="\t",col.names=NA)
-
 # remove control samples for plotting, remaining samples = 56
 ps = subset_samples(ps, Site != "control") ##! is how you exclude a sample
 ps
@@ -210,14 +196,12 @@ ps
 ```{r}
 # plot number of observed ASVs in coral samples
 plot_richness(ps,x="Treatment",color="Species",measures=c("Observed"))
-
 # look at data and chose filtering method for very low abundance ASVs
 ntaxa(ps) #22817
 ps5<-filter_taxa(ps, function(x) mean(x) >5, TRUE)
 ntaxa(ps5) #880
 get_taxa_unique(ps, "Genus") # 1000
 get_taxa_unique(ps5, "Genus") #305
-
 # filtered ASVs with very low abundance with phyloseq, now export otu and taxa tables from phyloseq for codaseq
 otu = as(otu_table(ps5), "matrix")
 taxon = as(tax_table(ps5), "matrix")
@@ -230,12 +214,10 @@ write.table(metadata,"Panama_ps5_silva_metadata.txt",sep="\t",col.names=NA)
 ```{r}
 ######### Perform center-log-ratio transformation on ASVs and calculate Aitchison Distance and principal components
 # READ IN OTU data that has been filtered for very low abundance sequences; do not clear data here. Keep phyloseq object ps5 for anosim/permanova
-
 otu <- read.table("Panama_ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
 taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
 samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
 genus<-as.character(taxon$Genus)
-
 # First, replace 0 values with an estimate (because normalization is taking log, can't have 0)
 # Also transposing here, need samples as rows
 d.czm <- cmultRepl(t(otu), method="CZM", label=0)
@@ -254,7 +236,6 @@ biplot(d.pcx, cex=c(0.6,0.4), var.axes=F,scale=1, xlab=xlab, ylab=ylab, ylabs=ge
 summary(d.pcx)
 str(d.pcx)
 screeplot(d.pcx)
-
 # replot PCA with ggplot2 (showing samples only), PCA PLOT, SPECIES AND TREATMENT COMPARISON
 df_out <- as.data.frame(d.pcx$x)
 theme_set(theme_bw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()))
@@ -288,31 +269,26 @@ ano.treat <- anosim(dist.clr, treat, permutations=999)
 plot(ano.treat)
 #dev.off()
 ####### Use phyloseq/vegan to perform ANOSIM/PERMANOVA
-
 #Species
 ano.species <- anosim(dist.clr, species, permutations=999)
 pdf("Panama_ANOSIM_Species.pdf",width=8.5)
 plot(ano.species)
 dev.off()
-
 #Origin
 ano.origin <- anosim(dist.clr, origin, permutations=999)
 pdf("Panama_ANOSIM_origin.pdf",width=8.5)
 plot(ano.origin)
 dev.off()
-
 #Logger
 ano.logger <- anosim(dist.clr, logger, permutations=999)
 pdf("Panama_ANOSIM_logger.pdf",width=8.5)
 plot(ano.logger)
 dev.off()
-
 #Treatment
 ano.treat <- anosim(dist.clr, treat, permutations=999)
 pdf("Panama_ANOSIM_treat.pdf",width=8.5)
 plot(ano.treat)
 dev.off()
-
 #permanova, treatment and species
 perm<-adonis(dist.clr~treat*species,as(sample_data(ps),"data.frame"))
 print(perm)
@@ -321,12 +297,10 @@ print(perm)
 
 ```{r}
 #PERMANOVA ANALYSIS OF SITE EFFECT WITH TREATMENT
-
 otu <- read.table("Panama_ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
 taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
 samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
 genus<-as.character(taxon$Genus)
-
 ##make a phyloseq object to be manipulated
 OTU = otu_table(otu, taxa_are_rows=FALSE)
 taxon<-as.matrix(taxon)
@@ -336,7 +310,6 @@ ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE),
                sample_data(samples), 
                tax_table(taxon))
 ps
-
 ##Subsetting for site and treatment effect
 ps=subset_samples(ps,Species =="Siderastrea siderea")
 ps
@@ -346,7 +319,6 @@ metadata = as(sample_data(ps), "matrix")
 write.table(otu,"SITE_TREATMENT_EFFECT_OTU.txt",sep="\t",col.names=NA)
 write.table(taxon,"SITE_TREATMENT_EFFECT_taxa.txt",sep="\t",col.names=NA)
 write.table(metadata,"SITE_TREATMENT_EFFECT_metadata.txt",sep="\t",col.names=NA)
-
 otu <- read.table("SITE_TREATMENT_EFFECT_OTU.txt",sep="\t",header=TRUE, row.names=1)
 taxon <- read.table("SITE_TREATMENT_EFFECT_taxa.txt",sep="\t",header=TRUE,row.names=1)
 samples<-read.table("SITE_TREATMENT_EFFECT_metadata.txt",sep="\t",header=T,row.names=1)
@@ -358,7 +330,6 @@ ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE),
                sample_data(samples), 
                tax_table(taxon))
 ps
-
 # First, replace 0 values with an estimate (because normalization is taking log, can't have 0)
 # Also transposing here, need samples as rows
 d.czm <- cmultRepl(t(otu), method="CZM", label=0)
@@ -368,7 +339,6 @@ d.clr <- codaSeq.clr(d.czm)
 E.clr <- t(d.clr)
 # plot compositional PCA biplot (perform a singular value decomposition)
 d.pcx <- prcomp(E.clr)
-
 ####### Use phyloseq/vegan to perform ANOSIM/PERMANOVA
 # set metadata as factors for anosim
 treat<-as.character(samples$Treatment)
@@ -376,25 +346,20 @@ species<-as.character(samples$Species)
 origin<-as.character(samples$Origin)
 site<-as.character(samples$Site)
 logger<-as.character(samples$Logger.MiniDOT)
-
 # set Aitchison distance as the distance measure for the anosim
 dist.clr <- dist(E.clr)
-
 #permanova
 perm<-adonis(dist.clr~site*treat,as(sample_data(ps),"data.frame"))
 print(perm)
-
 ```
 
 
 ```{r}
 #ANOSIM ANALYSIS OF SPECIES EFFECT (with unmanipulated, natural corals)
-
 # READ IN OTU data that has been filtered for very low abundance sequences. 
 otu <- read.table("Panama_ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
 taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
 samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
-
 ##make a phyloseq object to be manipulated
 OTU = otu_table(otu, taxa_are_rows=FALSE)
 taxon<-as.matrix(taxon)
@@ -404,7 +369,6 @@ ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE),
                sample_data(samples), 
                tax_table(taxon))
 ps
-
 ##subset sites based on treatments (unmanipulated, natural corals)
 ps=subset_samples(ps,Site =="Finca")
 ps
@@ -414,7 +378,6 @@ metadata = as(sample_data(ps), "matrix")
 write.table(otu,"SPECIES_EFFECT_OTU.txt",sep="\t",col.names=NA)
 write.table(taxon,"SPECIES_EFFECT_taxa.txt",sep="\t",col.names=NA)
 write.table(metadata,"SPECIES_EFFECT_metadata.txt",sep="\t",col.names=NA)
-
 otu <- read.table("SPECIES_EFFECT_OTU.txt",sep="\t",header=TRUE, row.names=1)
 taxon <- read.table("SPECIES_EFFECT_taxa.txt",sep="\t",header=TRUE,row.names=1)
 samples<-read.table("SPECIES_EFFECT_metadata.txt",sep="\t",header=T,row.names=1)
@@ -426,8 +389,6 @@ ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE),
                sample_data(samples), 
                tax_table(taxon))
 ps
-
-
 # First, replace 0 values with an estimate (because normalization is taking log, can't have 0)
 # Also transposing here, need samples as rows
 d.czm <- cmultRepl(t(otu), method="CZM", label=0)
@@ -446,7 +407,6 @@ biplot(d.pcx, cex=c(0.6,0.4), var.axes=F,scale=1, xlab=xlab, ylab=ylab, ylabs=ge
 summary(d.pcx)
 str(d.pcx)
 screeplot(d.pcx)
-
 ####### Use phyloseq/vegan to perform ANOSIM/PERMANOVA
 # set metadata as factors for anosim
 treat<-as.character(samples$Treatment)
@@ -461,17 +421,14 @@ ano.species <- anosim(dist.clr, species, permutations=999)
 #pdf("Panama_Punta_ANOSIM_treatment.pdf",width=8.5)
 plot(ano.species)
 #dev.off()
-
 ```
 
 ```{r}
 ########## BARCHARTS
-
 # READ IN OTU data that has been filtered for very low abundance sequences. 
 otu <- read.table("ps5_silva_nochloronomito_otu_table_myorder.txt",sep="\t",header=TRUE, row.names=1)
 taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
 samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
-
 ##make a phyloseq object to be manipulated
 OTU = otu_table(otu, taxa_are_rows=FALSE)
 taxon<-as.matrix(taxon)
@@ -493,7 +450,6 @@ palette <- distinctColorPalette(n)  #you can rerun this line to get a new select
 #save list of colors for palette that you like, this kind of works:
 cat(capture.output(print(palette), file="palette38.txt"))
 palette38<-c("#AC99E4","#BA4AB4","#4BA68D","#A240ED","#79DE65","#E7A24F","#A3A47A","#6EE295","#6AEB44","#CEF146","#D9CA79","#E2B7E9","#E0E8DB","#D580B8","#9DE9C1","#6DA0E2","#95B2AA","#6CE8ED","#E25D60","#DAEAB6","#7DAA5E","#CEEB86","#7080E4","#B4E7E3","#E840DB","#AE98B3","#E8D2DD","#BACCEC","#E8D84A","#B0735D","#53EECF","#664D75","#E5559B","#E8BD9F","#E297A4","#6D56CF","#DF87EB","#69B8D9")
-
 ##put treatments in a different order
 sample_data(ps_ra_alam)$Treatment<-factor(sample_data(ps_ra_alam)$Treatment,levels=c("Resident","Control plots","Hypoxia plots"))
 p1=plot_bar(ps_ra_alam, fill="Class")+
@@ -505,7 +461,6 @@ p1=plot_bar(ps_ra_alam, fill="Class")+
   theme(legend.position = "bottom")+
   theme(axis.title.x = element_blank())
 p1
-
 ##put treatments in a different order
 sample_data(ps_ra_ssid)$Treatment<-factor(sample_data(ps_ra_ssid)$Treatment,levels=c("Resident","Control plots","Hypoxia plots"))
 p2=plot_bar(ps_ra_ssid, fill="Class")+
@@ -517,12 +472,10 @@ p2=plot_bar(ps_ra_ssid, fill="Class")+
   theme(legend.position="bottom")+
   theme(axis.title.x = element_blank())
 p2
-
 # adjust width and height until it looks right for double columns
 pdf("Panama_Barcharts_Class).pdf",width=20, height=10)
 plot_grid(p1,p2,labels=c("A","B"), ncol=1, nrow=2)
 dev.off()
-
 ```
 
 ```{r}
@@ -1192,75 +1145,13 @@ fams
 dev.off()
 ```
 
+
 ```{r}
-############ Pulling out important families
-# aggregate ASVs by family
-dat <- tax_glom(ps, taxrank = "Family")
-#melt the data, so it's like a dataframe
-datm <- psmelt(dat)
-#Cast the new datatable with columns that are of interest
-datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Treatment + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
-dim(datc) #dimensions of the table
-#683 families
-otud <- datc[,c(1,7:683)] #select the first column, and then all of the taxa columns  
-colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
-metadat <- sample_data(ps) #get the sample data
-metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
-# at this point, my sample id numbers are the row names, not a separate column, move row names to column with dplylr
-metadat <- tibble::rownames_to_column(metadat, "Sample.ID") #make sure the sample names column is called Sample.ID
-names(otud) <- make.names(names(otud)) #get the names from the table for 
-otu_test <- otud #rename otud to otu_test, for syntax in ANCOM
-metadat <- select(metadat, c("Sample.ID","Species","Logger.MiniDOT")) # use select to only use treatment columns of interest
-map_test <- metadat #rename map_TEst
-Vardat <- map_test #specify that this for Vardat - ANCOM syntax
-#### ANCOM test - not adjusted, more than 2 levels = Kruskal Wallis
-comparison_test_log=ANCOM.main(OTUdat=otu_test, #calling the OTU table
-                                 Vardat=map_test, #calling the metadata
-                                 adjusted=FALSE, #true if covariates are to be included for adjustment
-                                 repeated=FALSE, #repeated measure
-                                 main.var="Logger.MiniDOT", #main variable or fator
-                                 adj.formula= NULL, #other factors to include
-                                 repeat.var=FALSE, #repeated measure
-                                 long = FALSE, #longitudinal study
-                                 multcorr=2,
-                                 sig=0.05, #significance level
-                                 prev.cut=0.90) #OTUs with proportion of zeroes greater than prev.cut are not included in the analysis
-resALL <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
-write.table(res,"ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.names=NA)
-resALL2 <- res[which(resALL$detected_0.7==TRUE),] 
-
-#### ANCOM test - Adjusted by Coral species, ANOVA
-comparison_test_treat=ANCOM.main(OTUdat=otu_test, #calling the OTU table
-                                 Vardat=map_test, #calling the metadata
-                                 adjusted=TRUE, #true if covariates are to be included for adjustment
-                                 repeated=FALSE, #repeated measure
-                                 main.var="Logger.MiniDOT", #main variable or fator
-                                 adj.formula= "Species", #other factors to include
-                                 repeat.var=FALSE, #repeated measure
-                                 long = FALSE, #longitudinal study
-                                 multcorr=2,
-                                 sig=0.05, #significance level
-                                 prev.cut=0.90) #OTUs with proportion of zeroes greater than prev.cut are not included in the analysis
-resALL3 <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
-write.table(resALL3,"SSID_ANCOM_family_ANOVA_Logger_covarSpecies.txt",sep="\t",col.names=NA)
-resALL4 <- res[which(resALL3$detected_0.9==TRUE),] 
-write.table(resALL4,"resALL4.txt",sep="\t",col.names=NA)
-
-sig_sites <- glue::glue_collapse(droplevels(factor(resALL4$otu.names)), sep = ", ") #this is to get a list of the families that are different
-print(sig_sites)
-#Family_XII, Desulfovibrionaceae, Arcobacteraceae, Midichloriaceae
-
-#Calculate relative abundance
-datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
-datc_relnames <- cbind(datc[,1:6],datc_relabund)
-
-#only selet the significant families
+#Only select families with the greatest difference in relative abundance
 sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT,Family_XII, Desulfovibrionaceae, Arcobacteraceae, Midichloriaceae)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Species","Logger.MiniDOT","Family"), na.rm=TRUE)
-
 #position=position_jitter(height=.00001)
-
 pdf("ANCOM_Families_Logger3Fanilies_covarSpecies.pdf",width=11)
 cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029","9"="#ABC9CB")
 sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
@@ -1291,6 +1182,7 @@ dev.off()
 
 ```{r, echo=FALSE}
 library(indicspecies)
+setwd("~/Desktop/PANAMA_HYPOXIA")
 asv <- read.table("Panama_ps_ra_silva_nochloronomito_otu_table_INDIC.txt",sep="\t",header=TRUE)
 
 # In the following line, change "6" to the column number that starts your ASV abundances
