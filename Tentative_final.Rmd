@@ -1,5 +1,6 @@
 ```{r}
 ## Load libraries
+library(devtools)
 library(rmarkdown)
 library(dada2)
 library(ShortRead)
@@ -169,18 +170,18 @@ ps
 
 ```{r}
 # remove chloroplasts and mitochondria and Eukaryota
-get_taxa_unique(ps, "Family") #687
-get_taxa_unique(ps, "Order") #416
+get_taxa_unique(ps, "Family") #679
+get_taxa_unique(ps, "Order") #411
 get_taxa_unique(ps, "Kingdom") #2
 ps <- subset_taxa(ps, Family !="Mitochondria")
 ps <- subset_taxa(ps, Order !="Chloroplast")
 ps <- subset_taxa(ps, Kingdom !="Eukaryota")
 ps <- subset_taxa(ps, Kingdom !="NA")
-get_taxa_unique(ps, "Family") #683
-get_taxa_unique(ps, "Order") #413
+get_taxa_unique(ps, "Family") #675
+get_taxa_unique(ps, "Order") #408
 get_taxa_unique(ps, "Kingdom") #2
 ps
-#22817 taxa and 57 samples
+#22823 taxa and 57 samples
 # filtered taxa with phyloseq, now export cleaned otu and taxa tables from phyloseq
 otu = as(otu_table(ps), "matrix")
 taxon = as(tax_table(ps), "matrix")
@@ -190,7 +191,7 @@ write.table(taxon,"Panama_silva_nochloronomito_taxa_table.txt",sep="\t",col.name
 # remove control samples for plotting, remaining samples = 56
 ps = subset_samples(ps, Site != "control") ##! is how you exclude a sample
 ps
-#22817 taxa and 56 samples
+#22823 taxa and 56 samples
 ```
 
 ```{r}
@@ -240,7 +241,7 @@ screeplot(d.pcx)
 df_out <- as.data.frame(d.pcx$x)
 theme_set(theme_bw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()))
 cols<-c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-#pdf("PCA_species_treatment.pdf",width=8.5)
+pdf("PCA_species_treatment.pdf",width=8.5)
 p<-ggplot(df_out,aes(x=PC1,y=PC2,fill=samples$Species,shape=samples$Treatment))
 p<-p+geom_point(size=3)+
   theme(axis.title = element_text(size=14))+
@@ -250,7 +251,7 @@ p<-p+geom_point(size=3)+
   scale_shape_manual(values=c(21,22,24))+
   guides(fill = guide_legend(override.aes=list(shape=21)))
 p + labs(x=xlab, y=ylab, fill="Species", shape="Treatment") + coord_fixed()
-#dev.off()
+dev.off()
 ```
 
 ```{r}
@@ -290,7 +291,7 @@ pdf("Panama_ANOSIM_treat.pdf",width=8.5)
 plot(ano.treat)
 dev.off()
 #permanova, treatment and species
-perm<-adonis(dist.clr~treat*species,as(sample_data(ps),"data.frame"))
+perm<-adonis2(dist.clr~treat*species,as(sample_data(ps),"data.frame"))
 print(perm)
 ```
 
@@ -426,7 +427,7 @@ plot(ano.species)
 ```{r}
 ########## BARCHARTS
 # READ IN OTU data that has been filtered for very low abundance sequences. 
-otu <- read.table("ps5_silva_nochloronomito_otu_table_myorder.txt",sep="\t",header=TRUE, row.names=1)
+otu <- read.table("Panama_ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
 taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
 samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
 ##make a phyloseq object to be manipulated
@@ -442,16 +443,16 @@ ps_ra<-transform_sample_counts(ps5, function(OTU) OTU/sum(OTU))
 ps_ra_alam = subset_samples(ps_ra, Species == "Agaricia lamarcki")
 ps_ra_ssid = subset_samples(ps_ra, Species == "Siderastrea siderea")
 #figure out how many colors you need
-get_taxa_unique(ps_ra, "Order") #107
-get_taxa_unique(ps_ra, "Class") #37
+get_taxa_unique(ps_ra, "Order") #108
+get_taxa_unique(ps_ra, "Class") #38
 #you can make n any number of colors you want; with as much difference between the colors as possible (distinct colors)
-n <- 37
+n <- 38
 palette <- distinctColorPalette(n)  #you can rerun this line to get a new selection of colors
 #save list of colors for palette that you like, this kind of works:
 cat(capture.output(print(palette), file="palette38.txt"))
 palette38<-c("#AC99E4","#BA4AB4","#4BA68D","#A240ED","#79DE65","#E7A24F","#A3A47A","#6EE295","#6AEB44","#CEF146","#D9CA79","#E2B7E9","#E0E8DB","#D580B8","#9DE9C1","#6DA0E2","#95B2AA","#6CE8ED","#E25D60","#DAEAB6","#7DAA5E","#CEEB86","#7080E4","#B4E7E3","#E840DB","#AE98B3","#E8D2DD","#BACCEC","#E8D84A","#B0735D","#53EECF","#664D75","#E5559B","#E8BD9F","#E297A4","#6D56CF","#DF87EB","#69B8D9")
 ##put treatments in a different order
-sample_data(ps_ra_alam)$Treatment<-factor(sample_data(ps_ra_alam)$Treatment,levels=c("Resident","Control plots","Hypoxia plots"))
+sample_data(ps_ra_alam)$Treatment<-factor(sample_data(ps_ra_alam)$Treatment,levels=c("Untreated","Control plots","Hypoxia plots"))
 p1=plot_bar(ps_ra_alam, fill="Class")+
   geom_bar(aes(fill=Class), stat="identity",position="stack")+theme(strip.text=element_text(face="bold"))+
   theme(axis.text.x = element_blank(),axis.ticks = element_blank())+scale_fill_manual(values=palette38)+
@@ -462,7 +463,7 @@ p1=plot_bar(ps_ra_alam, fill="Class")+
   theme(axis.title.x = element_blank())
 p1
 ##put treatments in a different order
-sample_data(ps_ra_ssid)$Treatment<-factor(sample_data(ps_ra_ssid)$Treatment,levels=c("Resident","Control plots","Hypoxia plots"))
+sample_data(ps_ra_ssid)$Treatment<-factor(sample_data(ps_ra_ssid)$Treatment,levels=c("Untreated","Control plots","Hypoxia plots"))
 p2=plot_bar(ps_ra_ssid, fill="Class")+
   geom_bar(aes(fill=Class), stat="identity",position="stack")+theme(strip.text=element_text(face="bold"))+
   theme(axis.text.x = element_blank(),axis.ticks = element_blank())+scale_fill_manual(values=palette38)+
@@ -473,7 +474,7 @@ p2=plot_bar(ps_ra_ssid, fill="Class")+
   theme(axis.title.x = element_blank())
 p2
 # adjust width and height until it looks right for double columns
-pdf("Panama_Barcharts_Class).pdf",width=20, height=10)
+pdf("Panama_Barcharts_Class.pdf",width=10, height=10)
 plot_grid(p1,p2,labels=c("A","B"), ncol=1, nrow=2)
 dev.off()
 ```
@@ -664,13 +665,15 @@ ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE),
                sample_data(samples), 
                tax_table(taxon))
 ps
-#22817 taxa and 56 samples
+#16381 taxa and 57 samples
 # remove control samples for plotting, remaining samples = 56
 ps = subset_samples(ps, Species != "control")
 ps
 #Separate coral species
 ps_ssid <- subset_samples(ps, Species == "Siderastrea siderea")
 ps_alam <- subset_samples(ps, Species == "Agaricia lamarcki")
+
+
 ############Siderastrea siderea
 # aggregate ASVs by family
 dat <- tax_glom(ps_ssid, taxrank = "Family")
@@ -679,8 +682,8 @@ datm <- psmelt(dat)
 #Cast the new datatable with columns that are of interest
 datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Treatment + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
 dim(datc) #dimensions of the table
-#683 families
-otud <- datc[,c(1,7:683)] #select the first column, and then all of the taxa columns  
+#602 families
+otud <- datc[,c(1,7:602)] #select the first column, and then all of the taxa columns  
 colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
 metadat <- sample_data(ps_ssid) #get the sample data
 metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
@@ -708,16 +711,16 @@ write.table(res,"SSID_ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.na
 res2 <- res[which(res$detected_0.7==TRUE),] #0.7 is the proportion of samples its detected in
 sig_sites <- glue::glue_collapse(droplevels(factor(res2$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
-#Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae, Marinobacteraceae, Francisellaceae, Halomonadaceae, Shewanellaceae
+#Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae, Nitrincolaceae, Francisellaceae, Shewanellaceae, Halomonadaceae
 #Calculate relative abundance
-datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
+datc_relabund <-  sweep(datc[,7:602], 1, rowSums(datc[,7:602]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
 #only selet the significant families
-sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae, Marinobacteraceae, Francisellaceae, Halomonadaceae, Shewanellaceae )
+sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae, Nitrincolaceae, Francisellaceae, Shewanellaceae, Halomonadaceae)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family"), na.rm=TRUE)
-cols<-c("Resident"="#E69F00","Control plots"="#56B4E9","Hypoxia plots"="#CC79A7")
-sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Resident","Control plots","Hypoxia plots"))
+cols<-c("Untreated"="#E69F00","Control plots"="#56B4E9","Hypoxia plots"="#CC79A7")
+sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Untreated","Control plots","Hypoxia plots"))
 #pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=8.5)
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Treatment))+
@@ -748,8 +751,8 @@ datm <- psmelt(dat)
 #Cast the new datatable with columns that are of interest
 datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Treatment + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
 dim(datc) #dimensions of the table
-#683 families
-otud <- datc[,c(1,7:683)] #select the first column, and then all of the taxa columns  
+#602 families
+otud <- datc[,c(1,7:602)] #select the first column, and then all of the taxa columns  
 colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
 metadat <- sample_data(ps_alam) #get the sample data
 metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
@@ -777,16 +780,16 @@ write.table(res,"ALAM_ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.na
 resA2 <- res[which(resA$detected_0.7==TRUE),] 
 sig_sites <- glue::glue_collapse(droplevels(factor(resA2$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
-#Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae
-datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
+#Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae
+datc_relabund <-  sweep(datc[,7:602], 1, rowSums(datc[,7:602]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
 #only selet the significant families
-sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae )
+sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 library(Rmisc)
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family"), na.rm=TRUE)
-cols<-c("Resident"="#E69F00","Control plots"="#56B4E9","Hypoxia plots"="#CC79A7")
-sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Resident","Control plots","Hypoxia plots"))
+cols<-c("Untreated"="#E69F00","Control plots"="#56B4E9","Hypoxia plots"="#CC79A7")
+sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Untreated","Control plots","Hypoxia plots"))
 #pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=8.5)
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Treatment))+
@@ -817,8 +820,8 @@ datm <- psmelt(dat)
 #Cast the new datatable with columns that are of interest
 datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Treatment + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
 dim(datc) #dimensions of the table
-#683 families
-otud <- datc[,c(1,7:683)] #select the first column, and then all of the taxa columns  
+#680 families
+otud <- datc[,c(1,7:602)] #select the first column, and then all of the taxa columns  
 colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
 metadat <- sample_data(ps) #get the sample data
 metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
@@ -861,18 +864,18 @@ write.table(resALL3,"SSID_ANCOM_family_ANOVA_Treatment_covarSpecies.txt",sep="\t
 resALL4 <- res[which(resALL3$detected_0.9==TRUE),] 
 sig_sites <- glue::glue_collapse(droplevels(factor(resALL4$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
-#Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae, Marinobacteraceae, Francisellaceae, Halomonadaceae, Shewanellaceae, Midichloriaceae, Schekmanbacteria, Desulfovibrionaceae, Bacteroidales, Anaerolineaceae
+#Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae, Nitrincolaceae, Francisellaceae, Shewanellaceae, Halomonadaceae, Midichloriaceae, Desulfovibrionaceae, Cellvibrionales
 #Calculate relative abundance
-datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
+datc_relabund <-  sweep(datc[,7:602], 1, rowSums(datc[,7:602]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
 #only selet the significant families
-sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Pseudomonadaceae, Parvibaculaceae, Nitrincolaceae, Marinobacteraceae, Francisellaceae, Halomonadaceae, Shewanellaceae, Midichloriaceae, Schekmanbacteria, Desulfovibrionaceae, Bacteroidales, Anaerolineaceae )
+sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae, Nitrincolaceae, Francisellaceae, Shewanellaceae, Halomonadaceae, Midichloriaceae, Desulfovibrionaceae, Cellvibrionales)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
-sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Species","Treatment","Family"), na.rm=TRUE)
+sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family", "Species"), na.rm=TRUE)
 #position=position_jitter(height=.00001)
-#pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=11)
-cols<-c("Resident"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
-sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Resident","Control plots","Hypoxia plots"))
+pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=11)
+cols<-c("Untreated"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
+sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Untreated","Control plots","Hypoxia plots"))
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Treatment))+
   scale_colour_manual(values=cols)+
@@ -890,7 +893,7 @@ fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   theme(legend.title = element_blank())+
   theme(legend.text = element_text(size=12))
 fams
-#dev.off()
+dev.off()
 ```
 
 
@@ -907,22 +910,16 @@ ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE),
                sample_data(samples), 
                tax_table(taxon))
 ps
-#22817 taxa and 57 samples
+#16381 taxa and 57 samples
 # remove control samples for plotting, remaining samples = 56
 ps = subset_samples(ps, Species != "control")
 ps
-#22817 taxa and 56 samples
+#22823 taxa and 56 samples
 #Separate coral species
 ps_ssid <- subset_samples(ps, Species == "Siderastrea siderea")
 ps_alam <- subset_samples(ps, Species == "Agaricia lamarcki")
-##color palette
-install.packages("devtools")
-devtools::install_github("shu251/PaletteWoodsHole")
-library(PaletteWoodsHole)
-names(woodshole)
-show_color(long_pond)
-long_pond = c("#C9A456", "#E27741", "#CB4E07","#8A9B5E",
-              "#643830", "#ABC9CB", "#DAB576", "#B04029")
+
+
 ############Siderastrea siderea
 # aggregate ASVs by family
 dat <- tax_glom(ps_ssid, taxrank = "Family")
@@ -931,8 +928,8 @@ datm <- psmelt(dat)
 #Cast the new datatable with columns that are of interest
 datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
 dim(datc) #dimensions of the table
-#683 families
-otud <- datc[,c(1,7:683)] #select the first column, and then all of the taxa columns  
+#601 families
+otud <- datc[,c(1,7:601)] #select the first column, and then all of the taxa columns  
 colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
 metadat <- sample_data(ps_ssid) #get the sample data
 metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
@@ -960,12 +957,12 @@ write.table(res,"SSID_ANCOM_family_KruskallWallis_Logger.MiniDOT.txt",sep="\t",c
 res2 <- res[which(res$detected_0.7==TRUE),] 
 sig_sites <- glue::glue_collapse(droplevels(factor(res2$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
-##Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae
+#Family_XII, Marinifilaceae, Rhodospirillales, Shewanellaceae, Marinobacteraceae, Pseudomonadaceae, Clostridiaceae_1, Nitrincolaceae, Halomonadaceae, Holosporaceae, Desulfovibrionaceae, Parvibaculaceae, Francisellaceae, Midichloriaceae, Proteobacteria, Clostridiales, Syntrophobacteraceae, Peptostreptococcaceae, Thermoanaerobaculaceae, Thermodesulfovibrionia, Bacteroidales, Cellvibrionaceae, Marinilabiliaceae, Sneathiellaceae, Nostocaceae, Desulfobacteraceae, Gammaproteobacteria, Cellvibrionales, Archaea, Idiomarinaceae, Clostridiaceae_4
 #Calculate relative abundance
-datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
+datc_relabund <-  sweep(datc[,7:601], 1, rowSums(datc[,7:601]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
 #only selet the significant families
-sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae )
+sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, Marinifilaceae, Rhodospirillales, Shewanellaceae, Marinobacteraceae, Pseudomonadaceae, Clostridiaceae_1, Nitrincolaceae, Halomonadaceae, Holosporaceae, Desulfovibrionaceae, Parvibaculaceae, Francisellaceae, Midichloriaceae, Proteobacteria, Clostridiales, Syntrophobacteraceae, Peptostreptococcaceae, Thermoanaerobaculaceae, Thermodesulfovibrionia, Bacteroidales, Cellvibrionaceae, Marinilabiliaceae, Sneathiellaceae, Nostocaceae, Desulfobacteraceae, Gammaproteobacteria, Cellvibrionales, Archaea, Idiomarinaceae, Clostridiaceae_4)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Logger.MiniDOT","Family"), na.rm=TRUE)
 cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#643830","7"="#DAB576","8"="#B04029", "9"="#ABC9CB")
@@ -999,8 +996,8 @@ datm <- psmelt(dat)
 #Cast the new datatable with columns that are of interest
 datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Treatment + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
 dim(datc) #dimensions of the table
-#683 families
-otud <- datc[,c(1,7:683)] #select the first column, and then all of the taxa columns  
+#602 families
+otud <- datc[,c(1,7:602)] #select the first column, and then all of the taxa columns  
 colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
 metadat <- sample_data(ps_alam) #get the sample data
 metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
@@ -1028,11 +1025,11 @@ write.table(res,"ALAM_ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.na
 resA2 <- res[which(resA$detected_0.7==TRUE),] 
 sig_sites <- glue::glue_collapse(droplevels(factor(resA2$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
-#Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae
-datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
+#Family_XII, Marinifilaceae, Rhodospirillales, Shewanellaceae, Marinobacteraceae, Pseudomonadaceae, Clostridiaceae_1, Nitrincolaceae, Halomonadaceae, Holosporaceae, Desulfovibrionaceae, Parvibaculaceae, Francisellaceae, Midichloriaceae, Proteobacteria, Clostridiales, Syntrophobacteraceae, Peptostreptococcaceae, Thermoanaerobaculaceae, Thermodesulfovibrionia, Bacteroidales, Cellvibrionaceae, Marinilabiliaceae, Sneathiellaceae, Nostocaceae, Desulfobacteraceae, Gammaproteobacteria, Cellvibrionales, Archaea, Idiomarinaceae, Clostridiaceae_4
+datc_relabund <-  sweep(datc[,7:602], 1, rowSums(datc[,7:602]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
 #only selet the significant families
-sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae)
+sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, Marinifilaceae, Rhodospirillales, Shewanellaceae, Marinobacteraceae, Pseudomonadaceae, Clostridiaceae_1, Nitrincolaceae, Halomonadaceae, Holosporaceae, Desulfovibrionaceae, Parvibaculaceae, Francisellaceae, Midichloriaceae, Proteobacteria, Clostridiales, Syntrophobacteraceae, Peptostreptococcaceae, Thermoanaerobaculaceae, Thermodesulfovibrionia, Bacteroidales, Cellvibrionaceae, Marinilabiliaceae, Sneathiellaceae, Nostocaceae, Desulfobacteraceae, Gammaproteobacteria, Cellvibrionales, Archaea, Idiomarinaceae, Clostridiaceae_4)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 library(Rmisc)
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Logger.MiniDOT","Family"), na.rm=TRUE)
@@ -1068,8 +1065,8 @@ datm <- psmelt(dat)
 #Cast the new datatable with columns that are of interest
 datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Treatment + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
 dim(datc) #dimensions of the table
-#683 families
-otud <- datc[,c(1,7:683)] #select the first column, and then all of the taxa columns  
+#691 families
+otud <- datc[,c(1,7:602)] #select the first column, and then all of the taxa columns  
 colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
 metadat <- sample_data(ps) #get the sample data
 metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
@@ -1077,7 +1074,7 @@ metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
 metadat <- tibble::rownames_to_column(metadat, "Sample.ID") #make sure the sample names column is called Sample.ID
 names(otud) <- make.names(names(otud)) #get the names from the table for 
 otu_test <- otud #rename otud to otu_test, for syntax in ANCOM
-metadat <- select(metadat, c("Sample.ID","Species","Logger.MiniDOT")) # use select to only use treatment columns of interest
+metadat <- select(metadat, c("Sample.ID","Species","Logger.MiniDOT")) # use select to only use logger columns of interest
 map_test <- metadat #rename map_TEst
 Vardat <- map_test #specify that this for Vardat - ANCOM syntax
 #### ANCOM test - not adjusted, more than 2 levels = Kruskal Wallis
@@ -1108,17 +1105,17 @@ comparison_test_treat=ANCOM.main(OTUdat=otu_test, #calling the OTU table
                                  sig=0.05, #significance level
                                  prev.cut=0.90) #OTUs with proportion of zeroes greater than prev.cut are not included in the analysis
 resALL3 <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
-write.table(resALL3,"SSID_ANCOM_family_ANOVA_Logger_covarSpecies.txt",sep="\t",col.names=NA)
+write.table(resALL3,"ANCOM_family_ANOVA_Logger_covarSpecies.txt",sep="\t",col.names=NA)
 resALL4 <- res[which(resALL3$detected_0.9==TRUE),] 
 write.table(resALL4,"resALL4.txt",sep="\t",col.names=NA)
 sig_sites <- glue::glue_collapse(droplevels(factor(resALL4$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
-#Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae, Idiomarinaceae, Marine_Group_II, Prolixibacteraceae, Archaea, B2M28, Arcobacteraceae, Desulfarculaceae, Schekmanbacteria, OCS116_clade, Cellvibrionales, Terasakiellaceae, Flammeovirgaceae, Desulfobulbaceae, Caenarcaniphilales, HOC36, Clade_III, Micrococcaceae, Rickettsiaceae, Anaerolineaceae, Moraxellaceae
+#Family_XII, Marinifilaceae, Rhodospirillales, Shewanellaceae, Marinobacteraceae, Pseudomonadaceae, Clostridiaceae_1, Nitrincolaceae, Halomonadaceae, Holosporaceae, Desulfovibrionaceae, Parvibaculaceae, Francisellaceae, Midichloriaceae, Proteobacteria, Clostridiales, Syntrophobacteraceae, Peptostreptococcaceae, Thermoanaerobaculaceae, Thermodesulfovibrionia, Bacteroidales, Cellvibrionaceae, Marinilabiliaceae, Sneathiellaceae, Nostocaceae, Desulfobacteraceae, Gammaproteobacteria, Cellvibrionales, Archaea, Idiomarinaceae, Clostridiaceae_4, Thiotrichaceae, Litoricolaceae, Spirochaetaceae, Arcobacteraceae, Cyanobacteria, Marine_Group_II, Flammeovirgaceae, Firmicutes, B2M28, Prolixibacteraceae, OCS116_clade, Schekmanbacteria, Desulfarculaceae, Terasakiellaceae, Micrococcaceae
 #Calculate relative abundance
-datc_relabund <-  sweep(datc[,7:683], 1, rowSums(datc[,7:683]), '/')
+datc_relabund <-  sweep(datc[,7:602], 1, rowSums(datc[,7:602]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
 #only selet the significant families
-sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, Shewanellaceae, Rhodospirillales, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Marinifilaceae, Nitrincolaceae, Desulfovibrionaceae, Holosporaceae, Parvibaculaceae, Clostridiaceae_1, Francisellaceae, Midichloriaceae, Proteobacteria, Syntrophobacteraceae, Peptostreptococcaceae, Bacteroidales, Thermodesulfovibrionia, Cellvibrionaceae, Gammaproteobacteria, Nostocaceae, Sneathiellaceae, Thermoanaerobaculaceae, Desulfobacteraceae, Clostridiaceae_4, Spirochaetaceae, Marinilabiliaceae, Litoricolaceae, Thiotrichaceae, Idiomarinaceae, Marine_Group_II, Prolixibacteraceae, Archaea, B2M28, Arcobacteraceae, Desulfarculaceae, Schekmanbacteria, OCS116_clade, Cellvibrionales, Terasakiellaceae, Flammeovirgaceae, Desulfobulbaceae, Caenarcaniphilales, HOC36, Clade_III, Micrococcaceae, Rickettsiaceae, Anaerolineaceae, Moraxellaceae )
+sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, Marinifilaceae, Rhodospirillales, Shewanellaceae, Marinobacteraceae, Pseudomonadaceae, Clostridiaceae_1, Nitrincolaceae, Halomonadaceae, Holosporaceae, Desulfovibrionaceae, Parvibaculaceae, Francisellaceae, Midichloriaceae, Proteobacteria, Clostridiales, Syntrophobacteraceae, Peptostreptococcaceae, Thermoanaerobaculaceae, Thermodesulfovibrionia, Bacteroidales, Cellvibrionaceae, Marinilabiliaceae, Sneathiellaceae, Nostocaceae, Desulfobacteraceae, Gammaproteobacteria, Cellvibrionales, Archaea, Idiomarinaceae, Clostridiaceae_4, Thiotrichaceae, Litoricolaceae, Spirochaetaceae, Arcobacteraceae, Cyanobacteria, Marine_Group_II, Flammeovirgaceae, Firmicutes, B2M28, Prolixibacteraceae, OCS116_clade, Schekmanbacteria, Desulfarculaceae, Terasakiellaceae, Micrococcaceae)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Species","Logger.MiniDOT","Family"), na.rm=TRUE)
 #position=position_jitter(height=.00001)
@@ -1182,7 +1179,6 @@ dev.off()
 
 ```{r, echo=FALSE}
 library(indicspecies)
-setwd("~/Desktop/PANAMA_HYPOXIA")
 asv <- read.table("Panama_ps_ra_silva_nochloronomito_otu_table_INDIC.txt",sep="\t",header=TRUE)
 
 # In the following line, change "6" to the column number that starts your ASV abundances
@@ -1206,8 +1202,8 @@ sub_pc<-data.frame(Treatment = pc$Treatment, Alteromonas = pc$ASV_17, Neptuniiba
 sub_pc_m = melt(sub_pc, id = "Treatment")
 
 ##Now we can plot the data using geom_boxplot from ggplot2
-sub_pc_m$Treatment<-factor(sub_pc_m$Treatment, levels=c("Resident","Control plots","Hypoxia plots"))
-cols<-c("Resident"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
+sub_pc_m$Treatment<-factor(sub_pc_m$Treatment, levels=c("Untreated","Control plots","Hypoxia plots"))
+cols<-c("Untreated"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
 pdf("INDIC_ASVs_Treatment_boxplot.pdf",width=10)
 gg<-ggplot(sub_pc_m, aes(x = variable, y = value)) + 
     geom_boxplot(outlier.shape=NA)+
