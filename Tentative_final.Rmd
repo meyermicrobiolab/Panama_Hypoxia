@@ -1211,7 +1211,7 @@ gg<-ggplot(sub_pc_m, aes(x = variable, y = value)) +
     geom_jitter(position=position_jitter(width=.1, height=0),aes(color=Treatment))+
      theme(legend.title = element_text(size = 12, face = "bold"), 
      legend.text = element_text(size = 10, face = "bold"), legend.position = "right", 
-     axis.text.x = element_text(face = "bold",colour = "black", size = 12), 
+     axis.text.x = element_text(face="bold.italic",colour = "black", size = 12), 
      axis.text.y = element_text(face = "bold", size = 12, colour = "black"), 
      axis.title.y = element_text(face = "bold", size = 14, colour = "black"), 
      panel.background = element_blank(), 
