@@ -195,14 +195,19 @@ ps
 ```
 
 ```{r}
+##Subset to only include samples from Punta Caracol for analysis
+ps_pc = subset_samples(ps, Site == "Punta Caracol")
+```
+
+```{r}
 # plot number of observed ASVs in coral samples
-plot_richness(ps,x="Treatment",color="Species",measures=c("Observed"))
+plot_richness(ps_pc,x="Treatment",color="Species",measures=c("Observed"))
 # look at data and chose filtering method for very low abundance ASVs
-ntaxa(ps) #22817
-ps5<-filter_taxa(ps, function(x) mean(x) >5, TRUE)
+ntaxa(ps_pc) #22817
+ps5<-filter_taxa(ps_pc, function(x) mean(x) >5, TRUE)
 ntaxa(ps5) #880
-get_taxa_unique(ps, "Genus") # 1000
-get_taxa_unique(ps5, "Genus") #305
+get_taxa_unique(ps_pc, "Genus") # 1000
+get_taxa_unique(ps5, "Genus") #299
 # filtered ASVs with very low abundance with phyloseq, now export otu and taxa tables from phyloseq for codaseq
 otu = as(otu_table(ps5), "matrix")
 taxon = as(tax_table(ps5), "matrix")
@@ -251,7 +256,7 @@ p<-p+geom_point(size=3)+
   scale_shape_manual(values=c(21,22,24))+
   guides(fill = guide_legend(override.aes=list(shape=21)))
 p + labs(x=xlab, y=ylab, fill="Species", shape="Treatment") + coord_fixed()
-dev.off()
+#dev.off()
 ```
 
 ```{r}
@@ -272,164 +277,31 @@ plot(ano.treat)
 ####### Use phyloseq/vegan to perform ANOSIM/PERMANOVA
 #Species
 ano.species <- anosim(dist.clr, species, permutations=999)
-pdf("Panama_ANOSIM_Species.pdf",width=8.5)
-plot(ano.species)
-dev.off()
-#Origin
-ano.origin <- anosim(dist.clr, origin, permutations=999)
-pdf("Panama_ANOSIM_origin.pdf",width=8.5)
-plot(ano.origin)
-dev.off()
-#Logger
-ano.logger <- anosim(dist.clr, logger, permutations=999)
-pdf("Panama_ANOSIM_logger.pdf",width=8.5)
-plot(ano.logger)
-dev.off()
-#Treatment
-ano.treat <- anosim(dist.clr, treat, permutations=999)
-pdf("Panama_ANOSIM_treat.pdf",width=8.5)
-plot(ano.treat)
-dev.off()
-#permanova, treatment and species
-perm<-adonis2(dist.clr~treat*species,as(sample_data(ps),"data.frame"))
-print(perm)
-```
-
-
-```{r}
-#PERMANOVA ANALYSIS OF SITE EFFECT WITH TREATMENT
-otu <- read.table("Panama_ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
-taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
-samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
-genus<-as.character(taxon$Genus)
-##make a phyloseq object to be manipulated
-OTU = otu_table(otu, taxa_are_rows=FALSE)
-taxon<-as.matrix(taxon)
-TAX = tax_table(taxon)
-sampledata = sample_data(samples)
-ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE), 
-               sample_data(samples), 
-               tax_table(taxon))
-ps
-##Subsetting for site and treatment effect
-ps=subset_samples(ps,Species =="Siderastrea siderea")
-ps
-otu = as(otu_table(ps), "matrix")
-taxon = as(tax_table(ps), "matrix")
-metadata = as(sample_data(ps), "matrix")
-write.table(otu,"SITE_TREATMENT_EFFECT_OTU.txt",sep="\t",col.names=NA)
-write.table(taxon,"SITE_TREATMENT_EFFECT_taxa.txt",sep="\t",col.names=NA)
-write.table(metadata,"SITE_TREATMENT_EFFECT_metadata.txt",sep="\t",col.names=NA)
-otu <- read.table("SITE_TREATMENT_EFFECT_OTU.txt",sep="\t",header=TRUE, row.names=1)
-taxon <- read.table("SITE_TREATMENT_EFFECT_taxa.txt",sep="\t",header=TRUE,row.names=1)
-samples<-read.table("SITE_TREATMENT_EFFECT_metadata.txt",sep="\t",header=T,row.names=1)
-OTU = otu_table(otu, taxa_are_rows=FALSE)
-taxon<-as.matrix(taxon)
-TAX = tax_table(taxon)
-sampledata = sample_data(samples)
-ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE), 
-               sample_data(samples), 
-               tax_table(taxon))
-ps
-# First, replace 0 values with an estimate (because normalization is taking log, can't have 0)
-# Also transposing here, need samples as rows
-d.czm <- cmultRepl(t(otu), method="CZM", label=0)
-# Perform the center-log-ratio (CLR) transformation 
-d.clr <- codaSeq.clr(d.czm)
-# transpose matrix of CLR transformed data for ordination and dendrogram
-E.clr <- t(d.clr)
-# plot compositional PCA biplot (perform a singular value decomposition)
-d.pcx <- prcomp(E.clr)
-####### Use phyloseq/vegan to perform ANOSIM/PERMANOVA
-# set metadata as factors for anosim
-treat<-as.character(samples$Treatment)
-species<-as.character(samples$Species)
-origin<-as.character(samples$Origin)
-site<-as.character(samples$Site)
-logger<-as.character(samples$Logger.MiniDOT)
-# set Aitchison distance as the distance measure for the anosim
-dist.clr <- dist(E.clr)
-#permanova
-perm<-adonis(dist.clr~site*treat,as(sample_data(ps),"data.frame"))
-print(perm)
-```
-
-
-```{r}
-#ANOSIM ANALYSIS OF SPECIES EFFECT (with unmanipulated, natural corals)
-# READ IN OTU data that has been filtered for very low abundance sequences. 
-otu <- read.table("Panama_ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
-taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
-samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
-##make a phyloseq object to be manipulated
-OTU = otu_table(otu, taxa_are_rows=FALSE)
-taxon<-as.matrix(taxon)
-TAX = tax_table(taxon)
-sampledata = sample_data(samples)
-ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE), 
-               sample_data(samples), 
-               tax_table(taxon))
-ps
-##subset sites based on treatments (unmanipulated, natural corals)
-ps=subset_samples(ps,Site =="Finca")
-ps
-otu = as(otu_table(ps), "matrix")
-taxon = as(tax_table(ps), "matrix")
-metadata = as(sample_data(ps), "matrix")
-write.table(otu,"SPECIES_EFFECT_OTU.txt",sep="\t",col.names=NA)
-write.table(taxon,"SPECIES_EFFECT_taxa.txt",sep="\t",col.names=NA)
-write.table(metadata,"SPECIES_EFFECT_metadata.txt",sep="\t",col.names=NA)
-otu <- read.table("SPECIES_EFFECT_OTU.txt",sep="\t",header=TRUE, row.names=1)
-taxon <- read.table("SPECIES_EFFECT_taxa.txt",sep="\t",header=TRUE,row.names=1)
-samples<-read.table("SPECIES_EFFECT_metadata.txt",sep="\t",header=T,row.names=1)
-OTU = otu_table(otu, taxa_are_rows=FALSE)
-taxon<-as.matrix(taxon)
-TAX = tax_table(taxon)
-sampledata = sample_data(samples)
-ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE), 
-               sample_data(samples), 
-               tax_table(taxon))
-ps
-# First, replace 0 values with an estimate (because normalization is taking log, can't have 0)
-# Also transposing here, need samples as rows
-d.czm <- cmultRepl(t(otu), method="CZM", label=0)
-# Perform the center-log-ratio (CLR) transformation 
-d.clr <- codaSeq.clr(d.czm)
-# transpose matrix of CLR transformed data for ordination and dendrogram
-E.clr <- t(d.clr)
-# plot compositional PCA biplot (perform a singular value decomposition)
-d.pcx <- prcomp(E.clr)
-# calculate percent variance explained for the axis labels
-pc1 <- round(d.pcx$sdev[1]^2/sum(d.pcx$sdev^2),2)
-pc2 <- round(d.pcx$sdev[2]^2/sum(d.pcx$sdev^2),2)
-xlab <- paste("PC1: ", pc1, sep="")
-ylab <- paste("PC2: ", pc2, sep="")
-biplot(d.pcx, cex=c(0.6,0.4), var.axes=F,scale=1, xlab=xlab, ylab=ylab, ylabs=genus)
-summary(d.pcx)
-str(d.pcx)
-screeplot(d.pcx)
-####### Use phyloseq/vegan to perform ANOSIM/PERMANOVA
-# set metadata as factors for anosim
-treat<-as.character(samples$Treatment)
-species<-as.character(samples$Species)
-origin<-as.character(samples$Origin)
-site<-as.character(samples$Site)
-logger<-as.character(samples$Logger.MiniDOT)
-# set Aitchison distance as the distance measure for the anosim
-dist.clr <- dist(E.clr)
-# anosim between groups using Aitchison distance, ARE THE GROUPS DIFFERENT (look at between data)
-ano.species <- anosim(dist.clr, species, permutations=999)
-#pdf("Panama_Punta_ANOSIM_treatment.pdf",width=8.5)
+#pdf("Panama_ANOSIM_Species.pdf",width=8.5)
 plot(ano.species)
 #dev.off()
+#Origin
+ano.origin <- anosim(dist.clr, origin, permutations=999)
+#pdf("Panama_ANOSIM_origin.pdf",width=8.5)
+plot(ano.origin)
+#dev.off()
+#Logger
+ano.logger <- anosim(dist.clr, logger, permutations=999)
+#pdf("Panama_ANOSIM_logger.pdf",width=8.5)
+plot(ano.logger)
+#dev.off()
+
+#permanova, treatment and species
+perm<-adonis2(dist.clr~treat*species,as(sample_data(ps_pc),"data.frame"))
+print(perm)
 ```
+
+
 
 ```{r}
 ########## BARCHARTS
 # READ IN OTU data that has been filtered for very low abundance sequences. 
-otu <- read.table("Panama_ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
-taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
-samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
+setwd("~/Desktop/PANAMA_HYPOXIA")
 ##make a phyloseq object to be manipulated
 OTU = otu_table(otu, taxa_are_rows=FALSE)
 taxon<-as.matrix(taxon)
@@ -443,7 +315,7 @@ ps_ra<-transform_sample_counts(ps5, function(OTU) OTU/sum(OTU))
 ps_ra_alam = subset_samples(ps_ra, Species == "Agaricia lamarcki")
 ps_ra_ssid = subset_samples(ps_ra, Species == "Siderastrea siderea")
 #figure out how many colors you need
-get_taxa_unique(ps_ra, "Order") #108
+get_taxa_unique(ps_ra, "Order") #106
 get_taxa_unique(ps_ra, "Class") #38
 #you can make n any number of colors you want; with as much difference between the colors as possible (distinct colors)
 n <- 38
@@ -452,7 +324,7 @@ palette <- distinctColorPalette(n)  #you can rerun this line to get a new select
 cat(capture.output(print(palette), file="palette38.txt"))
 palette38<-c("#AC99E4","#BA4AB4","#4BA68D","#A240ED","#79DE65","#E7A24F","#A3A47A","#6EE295","#6AEB44","#CEF146","#D9CA79","#E2B7E9","#E0E8DB","#D580B8","#9DE9C1","#6DA0E2","#95B2AA","#6CE8ED","#E25D60","#DAEAB6","#7DAA5E","#CEEB86","#7080E4","#B4E7E3","#E840DB","#AE98B3","#E8D2DD","#BACCEC","#E8D84A","#B0735D","#53EECF","#664D75","#E5559B","#E8BD9F","#E297A4","#6D56CF","#DF87EB","#69B8D9")
 ##put treatments in a different order
-sample_data(ps_ra_alam)$Treatment<-factor(sample_data(ps_ra_alam)$Treatment,levels=c("Untreated","Control plots","Hypoxia plots"))
+sample_data(ps_ra_alam)$Treatment<-factor(sample_data(ps_ra_alam)$Treatment,levels=c("Control plots","Hypoxia plots"))
 p1=plot_bar(ps_ra_alam, fill="Class")+
   geom_bar(aes(fill=Class), stat="identity",position="stack")+theme(strip.text=element_text(face="bold"))+
   theme(axis.text.x = element_blank(),axis.ticks = element_blank())+scale_fill_manual(values=palette38)+
@@ -463,7 +335,7 @@ p1=plot_bar(ps_ra_alam, fill="Class")+
   theme(axis.title.x = element_blank())
 p1
 ##put treatments in a different order
-sample_data(ps_ra_ssid)$Treatment<-factor(sample_data(ps_ra_ssid)$Treatment,levels=c("Untreated","Control plots","Hypoxia plots"))
+sample_data(ps_ra_ssid)$Treatment<-factor(sample_data(ps_ra_ssid)$Treatment,levels=c("Control plots","Hypoxia plots"))
 p2=plot_bar(ps_ra_ssid, fill="Class")+
   geom_bar(aes(fill=Class), stat="identity",position="stack")+theme(strip.text=element_text(face="bold"))+
   theme(axis.text.x = element_blank(),axis.ticks = element_blank())+scale_fill_manual(values=palette38)+
@@ -665,25 +537,31 @@ ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE),
                sample_data(samples), 
                tax_table(taxon))
 ps
-#16381 taxa and 57 samples
+#22823 taxa and 57 samples
 # remove control samples for plotting, remaining samples = 56
 ps = subset_samples(ps, Species != "control")
 ps
+
+get_taxa_unique(ps, "Family")
+
 #Separate coral species
 ps_ssid <- subset_samples(ps, Species == "Siderastrea siderea")
 ps_alam <- subset_samples(ps, Species == "Agaricia lamarcki")
 
-
 ############Siderastrea siderea
 # aggregate ASVs by family
 dat <- tax_glom(ps_ssid, taxrank = "Family")
+
 #melt the data, so it's like a dataframe
 datm <- psmelt(dat)
+
 #Cast the new datatable with columns that are of interest
 datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Treatment + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
+
 dim(datc) #dimensions of the table
-#602 families
-otud <- datc[,c(1,7:602)] #select the first column, and then all of the taxa columns  
+#680 families
+
+otud <- datc[,c(1,7:680)] #select the first column, and then all of the taxa columns  
 colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
 metadat <- sample_data(ps_ssid) #get the sample data
 metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
@@ -711,12 +589,14 @@ write.table(res,"SSID_ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.na
 res2 <- res[which(res$detected_0.7==TRUE),] #0.7 is the proportion of samples its detected in
 sig_sites <- glue::glue_collapse(droplevels(factor(res2$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
-#Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae, Nitrincolaceae, Francisellaceae, Shewanellaceae, Halomonadaceae
+#Family_XII, Marinifilaceae, Pseudomonadaceae, Nitrincolaceae, Marinobacteraceae, Parvibaculaceae, Shewanellaceae, Halomonadaceae, Francisellaceae
+
 #Calculate relative abundance
-datc_relabund <-  sweep(datc[,7:602], 1, rowSums(datc[,7:602]), '/')
+datc_relabund <-  sweep(datc[,7:680], 1, rowSums(datc[,7:680]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
+
 #only selet the significant families
-sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae, Nitrincolaceae, Francisellaceae, Shewanellaceae, Halomonadaceae)
+sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Pseudomonadaceae, Nitrincolaceae, Marinobacteraceae, Parvibaculaceae, Shewanellaceae, Halomonadaceae, Francisellaceae)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family"), na.rm=TRUE)
 cols<-c("Untreated"="#E69F00","Control plots"="#56B4E9","Hypoxia plots"="#CC79A7")
@@ -751,8 +631,8 @@ datm <- psmelt(dat)
 #Cast the new datatable with columns that are of interest
 datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Treatment + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
 dim(datc) #dimensions of the table
-#602 families
-otud <- datc[,c(1,7:602)] #select the first column, and then all of the taxa columns  
+#680 families
+otud <- datc[,c(1,7:680)] #select the first column, and then all of the taxa columns  
 colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
 metadat <- sample_data(ps_alam) #get the sample data
 metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
@@ -780,11 +660,12 @@ write.table(res,"ALAM_ANCOM_family_KruskallWallis_Treatment.txt",sep="\t",col.na
 resA2 <- res[which(resA$detected_0.7==TRUE),] 
 sig_sites <- glue::glue_collapse(droplevels(factor(resA2$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
-#Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae
-datc_relabund <-  sweep(datc[,7:602], 1, rowSums(datc[,7:602]), '/')
+##Family_XII, Marinifilaceae, Pseudomonadaceae, Nitrincolaceae, Marinobacteraceae
+
+datc_relabund <-  sweep(datc[,7:680], 1, rowSums(datc[,7:680]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
 #only selet the significant families
-sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae)
+sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Pseudomonadaceae, Nitrincolaceae, Marinobacteraceae)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 library(Rmisc)
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family"), na.rm=TRUE)
@@ -821,7 +702,7 @@ datm <- psmelt(dat)
 datc <- data.table::dcast(datm, Sample + Logger.MiniDOT + Treatment + Origin + Species ~ Family, value.var = 'Abundance', fun.aggregate = sum)
 dim(datc) #dimensions of the table
 #680 families
-otud <- datc[,c(1,7:602)] #select the first column, and then all of the taxa columns  
+otud <- datc[,c(1,7:680)] #select the first column, and then all of the taxa columns  
 colnames(otud)[1] <- "Sample.ID" #rename the first column to Sample.ID - this is to match ANCOM syntax
 metadat <- sample_data(ps) #get the sample data
 metadat <- as.data.frame(as.matrix(metadat)) #make into into a matrix
@@ -865,17 +746,19 @@ resALL4 <- res[which(resALL3$detected_0.9==TRUE),]
 sig_sites <- glue::glue_collapse(droplevels(factor(resALL4$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
 #Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae, Nitrincolaceae, Francisellaceae, Shewanellaceae, Halomonadaceae, Midichloriaceae, Desulfovibrionaceae, Cellvibrionales
+
 #Calculate relative abundance
-datc_relabund <-  sweep(datc[,7:602], 1, rowSums(datc[,7:602]), '/')
+datc_relabund <-  sweep(datc[,7:680], 1, rowSums(datc[,7:680]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
 #only selet the significant families
 sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae, Nitrincolaceae, Francisellaceae, Shewanellaceae, Halomonadaceae, Midichloriaceae, Desulfovibrionaceae, Cellvibrionales)
-sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
+
+sig_long <- melt(sig_dis,id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family", "Species"), na.rm=TRUE)
 #position=position_jitter(height=.00001)
-pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=11)
-cols<-c("Untreated"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
-sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Untreated","Control plots","Hypoxia plots"))
+#pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=11)
+cols<-c("Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
+sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Control plots","Hypoxia plots"))
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Treatment))+
   scale_colour_manual(values=cols)+
@@ -893,7 +776,7 @@ fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   theme(legend.title = element_blank())+
   theme(legend.text = element_text(size=12))
 fams
-dev.off()
+#dev.off()
 ```
 
 
@@ -1181,30 +1064,36 @@ dev.off()
 library(indicspecies)
 asv <- read.table("Panama_ps_ra_silva_nochloronomito_otu_table_INDIC.txt",sep="\t",header=TRUE)
 
+#subset for experimental corals only
+asv_pc<-subset(asv, Site =='Punta Caracol')
+
 # In the following line, change "6" to the column number that starts your ASV abundances
-abund = asv[,5:ncol(asv)]
-treatment=asv$Treatment
+abund = asv_pc[,5:ncol(asv)]
+treatment=asv_pc$Treatment
 inv = multipatt(abund, treatment, func = "r.g", control = how(nperm=9999))
 summary(inv)
 
 
-species=asv$Species
+species=asv_pc$Species
 inv2 = multipatt(abund, species, func = "r.g", control = how(nperm=9999))
 summary(inv2)
 
 ##Make a boxplot of treatment indic results
 pc<-read.table("Panama_ps_ra_silva_nochloronomito_otu_table_INDIC.txt",sep="\t",header=TRUE)
 
-##Next, we subset the data as desired by calling the specific columns we want to include in our boxplot figure. I’ve chosen the top four most significant ASVs associated with the “Hypoxia plots” grouping (stat-value>.55)
-sub_pc<-data.frame(Treatment = pc$Treatment, Alteromonas = pc$ASV_17, Neptuniibacter = pc$ASV_256, Aestuariicella = pc$ASV_314, Marinobacter = pc$ASV_425)
+#subset for experimental corals only
+sub_puc<-subset(pc, Site =='Punta Caracol')
+
+##Next, we subset the data as desired by calling the specific columns we want to include in our boxplot figure. I’ve chosen the top four most significant ASVs associated with the “Hypoxia plots” grouping (stat-value>.50)
+sub_pc<-data.frame(Treatment = sub_puc$Treatment, Alteromonas = sub_puc$ASV_17, Neptuniibacter = sub_puc$ASV_256, Aestuariicella = sub_puc$ASV_314, Marinobacter = sub_puc$ASV_425)
 
 ##Next, we convert the data frame from a “wide” format to a “long” format 
 sub_pc_m = melt(sub_pc, id = "Treatment")
 
 ##Now we can plot the data using geom_boxplot from ggplot2
-sub_pc_m$Treatment<-factor(sub_pc_m$Treatment, levels=c("Untreated","Control plots","Hypoxia plots"))
-cols<-c("Untreated"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
-pdf("INDIC_ASVs_Treatment_boxplot.pdf",width=10)
+sub_pc_m$Treatment<-factor(sub_pc_m$Treatment, levels=c("Control plots","Hypoxia plots"))
+cols<-c("Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
+#pdf("INDIC_ASVs_Treatment_boxplot.pdf",width=10)
 gg<-ggplot(sub_pc_m, aes(x = variable, y = value)) + 
     geom_boxplot(outlier.shape=NA)+
     geom_point(aes(color=Treatment))+
@@ -1220,5 +1109,5 @@ gg<-ggplot(sub_pc_m, aes(x = variable, y = value)) +
      labs(x= "", y = "Proportion") + 
      scale_color_manual(values = cols)
 gg
-dev.off()
+#dev.off()
 ```
