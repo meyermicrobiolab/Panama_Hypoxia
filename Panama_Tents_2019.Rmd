@@ -219,9 +219,11 @@ write.table(taxon,"Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",col.
 write.table(metadata,"Panama_ps5_silva_metadata.txt",sep="\t",col.names=NA)
 ```
 
+
 ```{r}
 ######### Perform center-log-ratio transformation on ASVs and calculate Aitchison Distance and principal components
 # READ IN OTU data that has been filtered for very low abundance sequences; do not clear data here. Keep phyloseq object ps5 for anosim/permanova
+setwd("~/Desktop/PANAMA_HYPOXIA")
 otu <- read.table("Panama_ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
 taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
 samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
@@ -229,7 +231,7 @@ genus<-as.character(taxon$Genus)
 # First, replace 0 values with an estimate (because normalization is taking log, can't have 0)
 # Also transposing here, need samples as rows
 d.czm <- cmultRepl(t(otu), method="CZM", label=0)
-# Perform the center-log-ratio (CLR) transformation 
+# Perform the center-log-CLR) transformation 
 d.clr <- codaSeq.clr(d.czm)
 # transpose matrix of CLR transformed data for ordination and dendrogram
 E.clr <- t(d.clr)
@@ -244,11 +246,12 @@ biplot(d.pcx, cex=c(0.6,0.4), var.axes=F,scale=1, xlab=xlab, ylab=ylab, ylabs=ge
 summary(d.pcx)
 str(d.pcx)
 screeplot(d.pcx)
+
 # replot PCA with ggplot2 (showing samples only), PCA PLOT, SPECIES AND TREATMENT COMPARISON
 df_out <- as.data.frame(d.pcx$x)
 theme_set(theme_bw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()))
 cols<-c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-pdf("PCA_species_treatment.pdf",width=8.5)
+#pdf("PCA_species_treatment.pdf",width=8.5)
 p<-ggplot(df_out,aes(x=PC1,y=PC2,fill=samples$Species,shape=samples$Treatment))
 p<-p+geom_point(size=3)+
   theme(axis.title = element_text(size=14))+
@@ -345,10 +348,96 @@ plot(ano.site)
 
 
 ```{r}
+##linear regression 
+df_pc1<-subset(df_out, select=c(PC1))
+#write.table(df_pc1,"PC1_values.txt",sep="\t",col.names=NA)
+
+##added O2 concentrations to table. Load table back in.
+regression<-read.table("PC1_values.txt",sep="\t",header=TRUE, row.names=1)
+
+#regression
+x<-c(regression$Last.Recorded.Dissolved.Oxygen.Measurement..mg.L.)
+y<-c(regression$PC1)
+model<-lm(x~y)
+summary(model)
+
+##graph
+#pdf("LinearRegression.pdf",width=8.5)
+theme_set(theme_bw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()))
+p<-ggplot(regression, aes(x=x, y=y))+
+  geom_point(size=3)+
+  theme(axis.title = element_text(size=14))+
+  theme(axis.text=element_text(size=12))+
+  ylab("PC1") + xlab("Last Recorded Dissolved Oxygen Measurement (mg/L)")
+  
+# Add the linear regression line to the plotted data
+p <- p + geom_smooth(method="lm", col="black")
+p
+#dev.off()
+```
+
+
+```{r}
+##########Beta Diversity Dispersions
+#calculate multivariate dispersions based on treatment
+mod <-betadisper(dist.clr, treat)
+#one way anova
+anova(mod)
+#boxplots
+plot(mod)
+boxplot(mod)
+
+## Compute mean distance to centroid per group
+#this just prints values on the console
+tapply(mod$distances, treat, mean)
+## Same, but variance instead
+tapply(mod$distances, treat, var)
+
+#Get the distances to centroid from the model
+mod$distances
+dis <- mod$distances
+#melt
+dis.melt <- melt(dis)
+#move rownames to columns so we can merge the dispersion values and metadata
+dis.melt$Sample <- rownames(dis.melt)
+samples$Sample <- rownames(samples)
+#merge metadata and dispersion 
+dis.treat <- merge(samples, dis.melt)
+#rename column
+colnames(dis.treat)[7] <- "distance"
+
+#run linear model to test significance
+distlm <-lm(distance~Species*Treatment, data=dis.treat)
+summary(distlm)
+anova(distlm)
+
+# plot average dispersion by group, with all points shown    
+cols<-c("Siderastrea siderea"="#55BCC2","Agaricia lamarcki"="#E77D72")
+dis.treat$Treatment<-factor(dis.treat$Treatment, levels=c("Control plots","Hypoxia plots"))
+theme_set(theme_bw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()))
+pdf("DistanceToCentroid.pdf",width=8.5)
+p2<-ggplot(dis.treat,aes(x=Treatment,y=distance))+
+  geom_boxplot()+
+  geom_jitter(position=position_jitter(width=.1, height=0),aes(color=Species),size=3)+
+  scale_color_manual(values=cols)+
+  theme(text=element_text(size=16))+
+  theme(legend.title = element_text(size=14))+
+  theme(legend.text = element_text(size=12))+
+  ylab("Distance to Centroid") + xlab("Treatment")
+p2 
+dev.off()
+```
+
+
+```{r}
 ########## BARCHARTS
 # READ IN OTU data that has been filtered for very low abundance sequences. 
 setwd("~/Desktop/PANAMA_HYPOXIA")
 ##make a phyloseq object to be manipulated
+otu <- read.table("Panama_ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
+taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
+samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
+genus<-as.character(taxon$Genus)
 OTU = otu_table(otu, taxa_are_rows=FALSE)
 taxon<-as.matrix(taxon)
 TAX = tax_table(taxon)
@@ -396,6 +485,7 @@ pdf("Panama_Barcharts_Class.pdf",width=10, height=10)
 plot_grid(p1,p2,labels=c("A","B"), ncol=1, nrow=2)
 dev.off()
 ```
+
 
 ```{r}
 ################################# ANCOM TEST OF DIFFERENTIALLY ABUNDANT FAMILIES
@@ -789,6 +879,7 @@ comparison_test_treat=ANCOM.main(OTUdat=otu_test, #calling the OTU table
 resALL3 <- comparison_test_treat$W.taxa #taxa that significantly vary across factor level of interest
 write.table(resALL3,"SSID_ANCOM_family_ANOVA_Treatment_covarSpecies.txt",sep="\t",col.names=NA)
 resALL4 <- res[which(resALL3$detected_0.9==TRUE),] 
+write.table(resALL4,"ANCOM_family_ANOVA_Treatment_covarSpecies.txt",sep="\t",col.names=NA)
 sig_sites <- glue::glue_collapse(droplevels(factor(resALL4$otu.names)), sep = ", ") #this is to get a list of the families that are different
 print(sig_sites)
 #Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae, Nitrincolaceae, Francisellaceae, Shewanellaceae, Halomonadaceae, Midichloriaceae, Desulfovibrionaceae, Cellvibrionales
