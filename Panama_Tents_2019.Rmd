@@ -350,30 +350,35 @@ plot(ano.site)
 ```{r}
 ##linear regression 
 df_pc1<-subset(df_out, select=c(PC1))
-#write.table(df_pc1,"PC1_values.txt",sep="\t",col.names=NA)
+write.table(df_pc1,"PC1_values.txt",sep="\t",col.names=NA)
 
 ##added O2 concentrations to table. Load table back in.
-regression<-read.table("PC1_values.txt",sep="\t",header=TRUE, row.names=1)
+regression<-read.table("PC1_O2_metadata.txt",sep="\t",header=TRUE, row.names=1)
 
 #regression
-x<-c(regression$Last.Recorded.Dissolved.Oxygen.Measurement..mg.L.)
+x<-c(regression$DO)
 y<-c(regression$PC1)
 model<-lm(x~y)
 summary(model)
 
 ##graph
-#pdf("LinearRegression.pdf",width=8.5)
+cols<-c("Control plots"="#0072B2","Hypoxia plots"="#56B4E9")
+
+pdf("LinearRegression.pdf",width=8)
 theme_set(theme_bw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()))
 p<-ggplot(regression, aes(x=x, y=y))+
-  geom_point(size=3)+
-  theme(axis.title = element_text(size=14))+
-  theme(axis.text=element_text(size=12))+
-  ylab("PC1") + xlab("Last Recorded Dissolved Oxygen Measurement (mg/L)")
-  
+  geom_point(size=3,aes(color=Treatment),stat="identity")+
+  scale_color_manual(values=cols)+
+  theme(axis.title = element_text(size=16))+
+  theme(axis.text=element_text(size=16))+
+  theme(legend.title = element_text(size=16))+
+  theme(legend.text = element_text(size=14))+
+  ylab("PC1") + xlab("Dissolved oxygen (mg/L)")
+
 # Add the linear regression line to the plotted data
 p <- p + geom_smooth(method="lm", col="black")
 p
-#dev.off()
+dev.off()
 ```
 
 
