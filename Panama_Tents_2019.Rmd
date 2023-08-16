@@ -894,9 +894,11 @@ datc_relabund <-  sweep(datc[,7:680], 1, rowSums(datc[,7:680]), '/')
 datc_relnames <- cbind(datc[,1:6],datc_relabund)
 #only selet the significant families
 sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Parvibaculaceae, Pseudomonadaceae, Marinobacteraceae, Nitrincolaceae, Francisellaceae, Shewanellaceae, Halomonadaceae, Midichloriaceae, Desulfovibrionaceae, Cellvibrionales)
-
 sig_long <- melt(sig_dis,id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family", "Species"), na.rm=TRUE)
+
+write.table(sum_sig, "ANCOM_sum_sig_table.txt",sep="\t",col.names=NA)
+
 #position=position_jitter(height=.00001)
 #pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=11)
 cols<-c("Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
@@ -1151,8 +1153,11 @@ datc_relnames <- cbind(datc[,1:6],datc_relabund)
 sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Acholeplasmataceae, Shewanellaceae, Nitrincolaceae, Rhodospirillales, Arcobacteraceae, Marinifilaceae, Clostridiaceae_1, Izimaplasmatales, Marinilabiliaceae, Prolixibacteraceae, Mollicutes_RF39, Bacteroidales, Desulfovibrionaceae, MSBL8, Francisellaceae, Family_XIII, Spirochaetaceae, Clostridiaceae, Clostridiales, Desulfobacteraceae, Clostridiaceae_4, Lachnospiraceae, Firmicutes, Midichloriaceae, Peptostreptococcaceae, "Bacteroidetes_BD2-2", Fusobacteriaceae, Izimaplasmataceae, Desulfobulbaceae, OPB56, Defluviitaleaceae, Melioribacteraceae, P.palmC41, Vibrionaceae, Colwelliaceae)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Species","Logger.MiniDOT","Family"), na.rm=TRUE)
+
+write.table(sum_sig, "ANCOM_sum_sig_Logger3_table.txt",sep="\t",col.names=NA)
+
 #position=position_jitter(height=.00001)
-pdf("ANCOM_Families_Logger_covarSpecies.pdf",width=14,height=16)
+#pdf("ANCOM_Families_Logger_covarSpecies.pdf",width=14,height=16)
 cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","8"="#B04029","9"="#ABC9CB")
 sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","8","9"))
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
@@ -1172,7 +1177,7 @@ fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   theme(legend.title = element_blank())+
   theme(legend.text = element_text(size=12))
 fams
-dev.off()
+#dev.off()
 ```
 
 
