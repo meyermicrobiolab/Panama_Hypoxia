@@ -223,7 +223,6 @@ write.table(metadata,"Panama_ps5_silva_metadata.txt",sep="\t",col.names=NA)
 ```{r}
 ######### Perform center-log-ratio transformation on ASVs and calculate Aitchison Distance and principal components
 # READ IN OTU data that has been filtered for very low abundance sequences; do not clear data here. Keep phyloseq object ps5 for anosim/permanova
-setwd("~/Desktop/PANAMA_HYPOXIA")
 otu <- read.table("Panama_ps5_silva_nochloronomito_otu_table.txt",sep="\t",header=TRUE, row.names=1)
 taxon <- read.table("Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",header=TRUE,row.names=1)
 samples<-read.table("Panama_ps5_silva_metadata.txt",sep="\t",header=T,row.names=1)
@@ -379,6 +378,25 @@ p<-ggplot(regression, aes(x=x, y=y))+
 p <- p + geom_smooth(method="lm", col="black")
 p
 dev.off()
+```
+
+
+```{r}
+############ Alpha Diversity #############
+##############################################
+#Alpha Diversity - number of unique OTUS (Observed) or taking into account the proportion of OTUs across samples (Shannon)
+
+pdf("Alpha_diversity",width=10, height=6)
+p<-plot_richness(ps_pc, x="Treatment",color="Species", measures=c("Chao1", "Shannon", "Simpson"))
+p<-p+geom_point(size=3)+
+  theme(axis.title = element_text(size=12))+
+  theme(axis.text=element_text(size=10))+
+  theme(axis.text.x = element_text(angle = 45, hjust=.5))+
+  theme(legend.title = element_text(size=12))+
+  theme(legend.text = element_text(size=10))
+p
+dev.off()
+
 ```
 
 
