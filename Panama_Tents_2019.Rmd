@@ -245,6 +245,7 @@ biplot(d.pcx, cex=c(0.6,0.4), var.axes=F,scale=1, xlab=xlab, ylab=ylab, ylabs=ge
 summary(d.pcx)
 str(d.pcx)
 screeplot(d.pcx)
+d.pcx$sdev^2 #prints eigenvalues from the prcomp singular value decomposition
 
 # replot PCA with ggplot2 (showing samples only), PCA PLOT, SPECIES AND TREATMENT COMPARISON
 df_out <- as.data.frame(d.pcx$x)
