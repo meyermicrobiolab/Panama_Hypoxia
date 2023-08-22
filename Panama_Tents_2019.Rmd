@@ -196,21 +196,17 @@ ps
 #22823 taxa and 56 samples
 ```
 
-```{r}
-##Subset to only include samples from Punta Caracol for analysis
-ps_pc = subset_samples(ps, Site == "Punta Caracol")
-```
 
 ```{r}
 # plot number of observed ASVs in coral samples
-plot_richness(ps_pc,x="Treatment",color="Species",measures=c("Observed"))
+plot_richness(ps,x="Treatment",color="Species",measures=c("Observed"))
 # look at data and chose filtering method for very low abundance ASVs
-ntaxa(ps_pc) #22823
+ntaxa(ps) #22823
 ps5<-filter_taxa(ps_pc, function(x) mean(x) >5, TRUE)
-ntaxa(ps5) #920
-get_taxa_unique(ps_pc, "Genus") # 1000
-get_taxa_unique(ps5, "Genus") #299
-# filtered ASVs with very low abundance with phyloseq, now export otu and taxa tables from phyloseq for codaseq
+ntaxa(ps5) #879
+get_taxa_unique(ps_pc, "Genus") 
+get_taxa_unique(ps5, "Genus") 
+# filtered ASVs with very low abundance with phyloseq, now export otu and taxa tables from phyloseq for codaseq, SAVE these following tables for replication
 otu = as(otu_table(ps5), "matrix")
 taxon = as(tax_table(ps5), "matrix")
 metadata = as(sample_data(ps5), "matrix")
@@ -219,6 +215,10 @@ write.table(taxon,"Panama_ps5_silva_nochloronomito_taxa_table.txt",sep="\t",col.
 write.table(metadata,"Panama_ps5_silva_metadata.txt",sep="\t",col.names=NA)
 ```
 
+```{r}
+##Subset to only include samples from Punta Caracol for analysis
+ps5 = subset_samples(ps5, Site == "Punta Caracol")
+```
 
 ```{r}
 ######### Perform center-log-ratio transformation on ASVs and calculate Aitchison Distance and principal components
