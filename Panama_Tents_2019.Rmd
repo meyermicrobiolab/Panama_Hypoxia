@@ -202,9 +202,9 @@ ps
 plot_richness(ps,x="Treatment",color="Species",measures=c("Observed"))
 # look at data and chose filtering method for very low abundance ASVs
 ntaxa(ps) #22823
-ps5<-filter_taxa(ps_pc, function(x) mean(x) >5, TRUE)
+ps5<-filter_taxa(ps5, function(x) mean(x) >5, TRUE)
 ntaxa(ps5) #879
-get_taxa_unique(ps_pc, "Genus") 
+get_taxa_unique(ps, "Genus") 
 get_taxa_unique(ps5, "Genus") 
 # filtered ASVs with very low abundance with phyloseq, now export otu and taxa tables from phyloseq for codaseq, SAVE these following tables for replication
 otu = as(otu_table(ps5), "matrix")
@@ -297,7 +297,7 @@ plot(ano.logger)
 #dev.off()
 
 #permanova, treatment and species
-perm<-adonis2(dist.clr~treat*species,as(sample_data(ps_pc),"data.frame"))
+perm<-adonis2(dist.clr~treat*species,as(sample_data(ps5),"data.frame"))
 print(perm)
 ```
 
@@ -388,7 +388,7 @@ dev.off()
 #Alpha Diversity - number of unique OTUS (Observed) or taking into account the proportion of OTUs across samples (Shannon)
 
 pdf("Alpha_diversity",width=10, height=6)
-p<-plot_richness(ps_pc, x="Treatment",color="Species", measures=c("Chao1", "Shannon", "Simpson"))
+p<-plot_richness(ps5, x="Treatment",color="Species", measures=c("Chao1", "Shannon", "Simpson"))
 p<-p+geom_point(size=3)+
   theme(axis.title = element_text(size=12))+
   theme(axis.text=element_text(size=10))+
