@@ -174,7 +174,7 @@ ps
 # remove chloroplasts and mitochondria and Eukaryota
 get_taxa_unique(ps, "Family") #679
 get_taxa_unique(ps, "Order") #411
-get_taxa_unique(ps, "Kingdom") #2
+get_taxa_unique(ps, "Kingdom") #3
 ps <- subset_taxa(ps, Family !="Mitochondria")
 ps <- subset_taxa(ps, Order !="Chloroplast")
 ps <- subset_taxa(ps, Kingdom !="Eukaryota")
@@ -202,10 +202,10 @@ ps
 plot_richness(ps,x="Treatment",color="Species",measures=c("Observed"))
 # look at data and chose filtering method for very low abundance ASVs
 ntaxa(ps) #22823
-ps5<-filter_taxa(ps5, function(x) mean(x) >5, TRUE)
+ps5<-filter_taxa(ps, function(x) mean(x) >5, TRUE)
 ntaxa(ps5) #879
-get_taxa_unique(ps, "Genus") 
-get_taxa_unique(ps5, "Genus") 
+get_taxa_unique(ps, "Genus") #1000
+get_taxa_unique(ps5, "Genus") #298
 # filtered ASVs with very low abundance with phyloseq, now export otu and taxa tables from phyloseq for codaseq, SAVE these following tables for replication
 otu = as(otu_table(ps5), "matrix")
 taxon = as(tax_table(ps5), "matrix")
