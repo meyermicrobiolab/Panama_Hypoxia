@@ -956,7 +956,7 @@ ps <- phyloseq(otu_table(otu, taxa_are_rows=FALSE),
                sample_data(samples), 
                tax_table(taxon))
 ps
-#16381 taxa and 57 samples
+#22823 taxa and 57 samples
 # remove control samples for plotting, remaining samples = 56
 ps = subset_samples(ps, Species != "control")
 ps
