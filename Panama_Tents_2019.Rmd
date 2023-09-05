@@ -759,7 +759,7 @@ datc_relnames <- cbind(datc[,1:6],datc_relabund)
 sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinifilaceae, Pseudomonadaceae, Nitrincolaceae, Marinobacteraceae, Parvibaculaceae, Shewanellaceae, Halomonadaceae, Francisellaceae)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family"), na.rm=TRUE)
-cols<-c("Untreated"="#E69F00","Control plots"="#56B4E9","Hypoxia plots"="#CC79A7")
+cols<-c("Untreated"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
 sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Untreated","Control plots","Hypoxia plots"))
 #pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=8.5)
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
@@ -829,7 +829,7 @@ sig_dis <- select(datc_relnames, Sample, Species, Treatment, Family_XII, Marinif
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Treatment"),variable.name="Family",value.name="Proportion")
 library(Rmisc)
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Treatment","Family"), na.rm=TRUE)
-cols<-c("Untreated"="#E69F00","Control plots"="#56B4E9","Hypoxia plots"="#CC79A7")
+cols<-c("Untreated"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
 sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Untreated","Control plots","Hypoxia plots"))
 #pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=8.5)
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
@@ -920,8 +920,8 @@ write.table(sum_sig, "ANCOM_sum_sig_table.txt",sep="\t",col.names=NA)
 
 #position=position_jitter(height=.00001)
 #pdf("ANCOM_Families_Treatment_covarSpecies.pdf",width=11)
-cols<-c("Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
-sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Control plots","Hypoxia plots"))
+cols<-c("Untreated"="#56B4E9","Control plots"="#E69F00","Hypoxia plots"="#CC79A7")
+sum_sig$Treatment<-factor(sum_sig$Treatment, levels=c("Untreated","Control plots","Hypoxia plots"))
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Treatment))+
   scale_colour_manual(values=cols)+
@@ -960,11 +960,6 @@ ps
 # remove control samples for plotting, remaining samples = 56
 ps = subset_samples(ps, Species != "control")
 ps
-
-#remove unmanipulated, resident corals
-ps = subset_samples(ps, Site == "Punta Caracol")
-ps
-
 
 #22823 taxa and 56 samples
 #Separate coral species
@@ -1017,8 +1012,8 @@ datc_relnames <- cbind(datc[,1:6],datc_relabund)
 sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, JTB215, Marinobacteraceae, Pseudomonadaceae, Halomonadaceae, Acholeplasmataceae, Shewanellaceae, Nitrincolaceae, Rhodospirillales, Arcobacteraceae, Marinifilaceae, Clostridiaceae_1, Izimaplasmatales, Marinilabiliaceae, Prolixibacteraceae, Mollicutes_RF39, Bacteroidales, Desulfovibrionaceae, MSBL8, Francisellaceae, Family_XIII, Spirochaetaceae, Clostridiaceae, Clostridiales, Desulfobacteraceae, Clostridiaceae_4, Lachnospiraceae, Firmicutes, Midichloriaceae, Peptostreptococcaceae, "Bacteroidetes_BD2-2", Fusobacteriaceae, Izimaplasmataceae, Desulfobulbaceae, OPB56, Defluviitaleaceae, Melioribacteraceae, P.palmC41, Vibrionaceae, Colwelliaceae, Desulfuromonadaceae, Micrococcaceae, "Absconditabacteriales_(SR1)", "LCP-89", Puniceispirillales, Marinomonadaceae, Gammaproteobacteria, Holosporaceae, Thiotrichaceae, Litoricolaceae, Flammeovirgaceae, Clade_III, Kangiellaceae, Cryomorphaceae, Sphingomonadaceae, Proteobacteria, Sneathiellaceae, BIrii41, Parvibaculaceae, OCS116_clade, Thermodesulfovibrionia, Clade_II, Cellvibrionaceae, KI89A_clade, Erysipelotrichaceae, Syntrophobacteraceae, Hyphomonadaceae, "AEGEAN-169_marine_group", Arenicellaceae, Deltaproteobacteria, UBA10353_marine_group, Spongiibacteraceae, Bacteroidia, Idiomarinaceae, Thermoanaerobaculaceae, OM182_clade)
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Logger.MiniDOT","Family"), na.rm=TRUE)
-cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E", "8"="#B04029", "9"="#ABC9CB")
-sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","8","9"))
+cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#EFA5B5","7"="#FFC54F","8"="#B04029","9"="#ABC9CB")
+sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
 #pdf("ANCOM_Families_Logger.MiniDOT_covarSpecies.pdf",width=8.5)
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Logger.MiniDOT))+
@@ -1086,8 +1081,8 @@ sig_dis <- select(datc_relnames, Sample, Species, Logger.MiniDOT, Family_XII, JT
 sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variable.name="Family",value.name="Proportion")
 library(Rmisc)
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Logger.MiniDOT","Family"), na.rm=TRUE)
-cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","8"="#B04029", "9"="#ABC9CB")
-sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","8","9"))
+cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#EFA5B5","7"="#FFC54F","8"="#B04029","9"="#ABC9CB")
+sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
 #pdf("ANCOM_Families_Logger.MiniDOT_covarSpecies.pdf",width=8.5)
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Logger.MiniDOT))+
@@ -1177,8 +1172,8 @@ write.table(sum_sig, "ANCOM_sum_sig_Logger3_table.txt",sep="\t",col.names=NA)
 
 #position=position_jitter(height=.00001)
 #pdf("ANCOM_Families_Logger_covarSpecies.pdf",width=14,height=16)
-cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","8"="#B04029","9"="#ABC9CB")
-sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","8","9"))
+cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#EFA5B5","7"="#FFC54F","8"="#B04029","9"="#ABC9CB")
+sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Logger.MiniDOT))+
   scale_colour_manual(values=cols)+
@@ -1207,8 +1202,8 @@ sig_long <- melt(sig_dis, id.vars=c("Sample","Species","Logger.MiniDOT"),variabl
 sum_sig <- Rmisc::summarySE(sig_long, measurevar = "Proportion", groupvars = c("Species","Logger.MiniDOT","Family"), na.rm=TRUE)
 #position=position_jitter(height=.00001)
 pdf("ANCOM_Families_Logger3Fanilies_covarSpecies.pdf",width=11)
-cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","8"="#B04029","9"="#ABC9CB")
-sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","8","9"))
+cols<-c("1"="#C9A456","2"="#E27741","3"="#1A5276","4"="#CB4E07","5"="#8A9B5E","6"="#EFA5B5","7"="#FFC54F","8"="#B04029","9"="#ABC9CB")
+sum_sig$Logger.MiniDOT<-factor(sum_sig$Logger.MiniDOT, levels=c("1","2","3","4","5","6","7","8","9"))
 fams <- ggplot(sum_sig, aes(x=Family, y=Proportion))+
   geom_point(size=4,aes(color=Logger.MiniDOT))+
   scale_colour_manual(values=cols)+
